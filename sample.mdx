@@ -1,0 +1,53 @@
+---
+id: agent-router
+title: Agent Router Pattern
+sidebar_label: Agent Router
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Agent Router Pattern
+
+:::note
+The Agent Router is the "Hello World" of agentic coordination.
+:::
+
+## What Problem Does This Solve?
+
+In a system with many specialized agents, how do you map a user's natural language request to the right agent without hardcoding if/else logic? Keyword matching breaks because the same intent can be phrased in many ways. Adding a new agent requires touching routing logic everywhere. The Agent Router solves this by separating intent understanding from routing decisions.
+
+## The Two-Step Architecture
+
+The router works in two distinct steps. First, an LLM extracts a structured intent object from the raw query. Second, a capability graph maps that intent to the correct agent. The LLM never names an agent directly.
+
+```python
+class AgentRouter:
+    def __init__(self):
+        self.capability_graph = {
+            ("find", "sales_report"): "SalesAgent",
+            ("analyze", "invoice"):   "FinanceAgent",
+            ("create", "server_log"): "DevOpsAgent",
+        }
+
+    def route(self, query: str) -> str:
+        intent = self.extract_intent(query)
+        agent = self.capability_graph.get(
+            (intent.action, intent.resource)
+        )
+        return agent or "REJECTED"
+```
+
+## The Capability Graph
+
+The capability graph is a whitelist. Any (action, resource) pair not in the graph is physically rejected — not silently routed to a fallback. This is the security boundary of the system.
+
+- Adding a new agent requires only one new line in the graph
+- The LLM cannot override routing decisions
+- Unknown intent is explicitly blocked
+
+## When to Use
+
+Use the Agent Router when you have three or more specialized agents, users interact via natural language, and you need safety guarantees that no agent receives out-of-scope commands.
+
+![Architecture Diagram](./assets/router-diagram.png)

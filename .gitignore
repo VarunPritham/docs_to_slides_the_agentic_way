@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Node
+node_modules/
+.docusaurus/
+docs-site/build/
+
+# Slidev output node_modules
+output/slides/node_modules/
+
+# Generated slides (output is ephemeral)
+output/slides/slides.md
+output/assets/
+
+# Mac
+.DS_Store
