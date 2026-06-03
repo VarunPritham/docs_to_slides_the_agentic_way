@@ -47,7 +47,7 @@ Three agentic patterns in one pipeline:
 
 ```bash
 # 1. Clone and set up Python env
-git clone https://github.com/VarunPritham/docs_to_slides_the_agentic_way.git
+git clone <YOUR_REPO_URL>
 cd docs_to_slides_the_agentic_way
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -127,7 +127,7 @@ Only 4 of 18 agents make LLM calls: `ContentTypeClassifier`, `ProseCondenser`, `
 
 ## Docs-Site: 25 Page Layouts
 
-The `docs-site/` directory is a standalone Docusaurus knowledge hub. It ships with 25 reusable React/TypeScript page layouts — Deep Navy + Sky Blue brand palette, Barclays-ready, full dark mode support.
+The `docs-site/` directory is a standalone Docusaurus knowledge hub. It ships with 25 reusable React/TypeScript page layouts — Deep Navy + Sky Blue brand palette, full dark mode support.
 
 ### Layout Categories
 
@@ -263,4 +263,4 @@ Layout agents (one per component):
 
 ## Patterns Reference
 
-This project demonstrates three agentic patterns from [Multi-Agent-Architecture-Patterns](https://github.com/VarunPritham/Multi-Agent-Architecture-Pattens) applied to a real document processing pipeline.
+This project demonstrates three agentic patterns from [Multi-Agent-Architecture-Patterns](<YOUR_PATTERNS_REPO_URL>) applied to a real document processing pipeline.

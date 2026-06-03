@@ -107,7 +107,7 @@ import { ArchitectureDiagram } from '@site/src/components/PageLayouts/wave6';
   diagramType="flowchart"
   owner="Platform Team"
   lastUpdated="2026-06-02"
-  repoUrl="https://github.com/varunpritham/docusaurus-to-slidev"
+  repoUrl="<YOUR_REPO_URL>"
   mermaid={`flowchart LR
     A[MDX Page] --> B[POST /generate]
     B --> C{LangGraph Pipeline}

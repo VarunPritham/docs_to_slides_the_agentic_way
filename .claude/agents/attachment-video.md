@@ -100,7 +100,7 @@ if (['mp4','webm','mov','avi','mkv','m4v'].includes(ext)
     || /youtube\.com|youtu\.be|vimeo\.com/.test(url)) return 'video';
 
 // For YouTube/Vimeo, set name to a human-readable title:
-{ name: "Sprint Demo — Sprint 4", url: "https://youtu.be/abc123" }
+{ name: "Sprint Demo — Sprint 4", url: "<YOUR_VIDEO_URL>" }
 ```
 
 ## MDX Usage
@@ -108,7 +108,7 @@ if (['mp4','webm','mov','avi','mkv','m4v'].includes(ext)
 import { AttachmentPanel } from '@site/src/components/PageLayouts/wave6';
 
 <AttachmentPanel title="Demo Recordings" files={[
-  { name: "Pipeline Walkthrough", url: "https://www.youtube.com/watch?v=abc123",
+  { name: "Pipeline Walkthrough", url: "<YOUR_VIDEO_URL>",
     description: "End-to-end demo: click Generate Slides → Slidev" },
   { name: "incident-replay.mp4", url: "/videos/incident-replay.mp4",
     size: "48 MB", description: "Screen recording from incident INC-2026-0031" },

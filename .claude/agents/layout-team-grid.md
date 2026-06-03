@@ -24,7 +24,7 @@ interface TeamMember {
   team: string;
   timezone?: string;      // "Europe/London 🇬🇧"
   oncall?: boolean;       // shows green dot on avatar
-  slack?: string;         // "@alice.chan"
+  slack?: string;         // "@<team-member>.chan"
   email?: string;
   avatar?: string;        // URL — falls back to initials
 }
@@ -78,7 +78,7 @@ import { TeamGrid } from '@site/src/components/PageLayouts';
     team: "SRE",
     timezone: "Europe/London 🇬🇧",
     oncall: true,
-    slack: "@alice.chan",
+    slack: "@<team-member>.chan",
     email: "alice@example.com",
   },
   {

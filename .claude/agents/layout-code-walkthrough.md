@@ -38,7 +38,7 @@ interface WalkthroughStop {
 
 interface CodeWalkthroughProps {
   title: string;
-  repo: string;              // "https://github.com/org/repo"
+  repo: string;              // "<YOUR_REPO_URL>"
   estimatedMinutes: number;
   stops: WalkthroughStop[];
 }
@@ -97,7 +97,7 @@ import { CodeWalkthrough } from '@site/src/components/PageLayouts/wave6';
 
 <CodeWalkthrough
   title="How the pipeline generates slides"
-  repo="https://github.com/varunpritham/docusaurus-to-slidev"
+  repo="<YOUR_REPO_URL>"
   estimatedMinutes={12}
   stops={[
     {

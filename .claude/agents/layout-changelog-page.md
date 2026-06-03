@@ -23,7 +23,7 @@ interface ChangeItem {
   type: ChangeType;
   text: string;
   pr?: string;       // "#142"
-  author?: string;   // "@alice"
+  author?: string;   // "@<team-member>"
 }
 
 interface Release {
@@ -117,7 +117,7 @@ const releaseStatusConfig = {
 import { ChangelogPage } from '@site/src/components/PageLayouts/wave6';
 
 <ChangelogPage
-  repoUrl="https://github.com/varunpritham/docusaurus-to-slidev"
+  repoUrl="<YOUR_REPO_URL>"
   releases={[
     {
       version: "1.4.0",
@@ -125,8 +125,8 @@ import { ChangelogPage } from '@site/src/components/PageLayouts/wave6';
       status: "latest",
       summary: "Dark mode fixes across all layout components.",
       changes: [
-        { type: "fix", text: "InfoPanel backgrounds now use CSS classes instead of inline styles", pr: "#187", author: "@alice" },
-        { type: "fix", text: "RunbookStep severity colours respect dark mode", pr: "#188", author: "@alice" },
+        { type: "fix", text: "InfoPanel backgrounds now use CSS classes instead of inline styles", pr: "#187", author: "@<team-member>" },
+        { type: "fix", text: "RunbookStep severity colours respect dark mode", pr: "#188", author: "@<team-member>" },
         { type: "feat", text: "Architecture Diagram uses Mermaid dark theme in dark mode", pr: "#183" },
       ],
     },

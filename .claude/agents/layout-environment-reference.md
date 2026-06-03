@@ -119,12 +119,12 @@ import { EnvironmentReference } from '@site/src/components/PageLayouts/wave6';
   configFile=".env.local"
   variables={[
     { name: "ANTHROPIC_API_KEY", required: true, type: "string", secret: true,
-      example: "sk-ant-api03-...", description: "Anthropic API key for LLM calls. Omit to run in mock mode." },
+      example: "sk-ant-api03-<REDACTED>", description: "Anthropic API key for LLM calls. Omit to run in mock mode." },
     { name: "LLM_PROVIDER", required: false, type: "enum", default: "anthropic",
       enumValues: ["anthropic", "databricks"],
       description: "LLM backend provider. Switch without code changes." },
     { name: "DATABRICKS_HOST", required: false, type: "url",
-      example: "https://adb-xxx.azuredatabricks.net",
+      example: "https://<YOUR_DATABRICKS_HOST>",
       description: "Databricks workspace URL. Required only if LLM_PROVIDER=databricks." },
   ]}
 />

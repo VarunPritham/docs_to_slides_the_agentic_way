@@ -28,7 +28,7 @@ interface Snippet {
   tags: string[];          // ["async", "langgraph", "state"]
   whenToUse: string;
   code: string;
-  author?: string;         // "alice"
+  author?: string;         // "<team-member>"
   addedDate?: string;      // "2026-06-02"
 }
 
@@ -159,7 +159,7 @@ import { CodeSnippetLibrary } from '@site/src/components/PageLayouts/wave6';
     result = do_something(content)
     # Return only the keys this agent owns
     return {"my_output": result}`,
-    author: "alice",
+    author: "<team-member>",
     addedDate: "2026-06-02",
   },
   {
