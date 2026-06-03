@@ -6,12 +6,215 @@ import styles from './wave-styles.module.css';
 /* ─────────────────────────────────────────────────────────────────────────────
    WAVE 6 — DOCS AS CODE
    Components:
+     • AttachmentPanel      — file/media attachment viewer (image grid, video, download cards)
      • CodeWalkthrough      — step-by-step annotated code tour
      • ChangelogPage        — structured release history
      • EnvironmentReference — environment variable documentation
      • ArchitectureDiagram  — Mermaid diagram with metadata
      • CodeSnippetLibrary   — searchable tagged code patterns
 ───────────────────────────────────────────────────────────────────────────── */
+
+// ── Attachment types ────────────────────────────────────────────────────────
+
+type AttachmentKind =
+  | 'image'        // .png .jpg .jpeg .gif .svg .webp
+  | 'video'        // .mp4 .webm .mov  OR  youtube/vimeo URL
+  | 'pdf'          // .pdf
+  | 'spreadsheet'  // .xlsx .xls .csv
+  | 'document'     // .docx .doc .pptx .ppt
+  | 'archive'      // .zip .tar .gz .7z (also .tar.gz)
+  | 'config'       // .yaml .yml .json .toml .env .ini .conf
+  | 'code'         // .py .ts .tsx .js .jsx .sh .bash .sql .go .rs .java
+  | 'text'         // .txt .log .md
+  | 'unknown';
+
+export interface Attachment {
+  name: string;
+  url: string;
+  kind?: AttachmentKind;   // auto-detected from extension if omitted
+  size?: string;           // "2.4 MB"
+  description?: string;
+  preview?: string;        // inline text content for config/code/text files
+  language?: string;       // syntax highlight hint for preview block
+}
+
+// ── detectKind helper ───────────────────────────────────────────────────────
+
+const detectKind = (name: string, url: string): AttachmentKind => {
+  const ext = (name.split('.').pop() ?? '').toLowerCase();
+  if (['png','jpg','jpeg','gif','svg','webp'].includes(ext)) return 'image';
+  if (['mp4','webm','mov'].includes(ext) || /youtube\.com|youtu\.be|vimeo\.com/.test(url)) return 'video';
+  if (ext === 'pdf') return 'pdf';
+  if (['xlsx','xls','csv'].includes(ext)) return 'spreadsheet';
+  if (['docx','doc','pptx','ppt'].includes(ext)) return 'document';
+  if (['zip','tar','gz','7z'].includes(ext) || name.endsWith('.tar.gz')) return 'archive';
+  if (['yaml','yml','json','toml','env','ini','conf'].includes(ext)) return 'config';
+  if (['py','ts','tsx','js','jsx','sh','bash','sql','go','rs','java'].includes(ext)) return 'code';
+  if (['txt','log','md'].includes(ext)) return 'text';
+  return 'unknown';
+};
+
+const kindMeta: Record<AttachmentKind, { icon: string; label: string }> = {
+  image:       { icon: '🖼️',  label: 'Image' },
+  video:       { icon: '🎬',  label: 'Video' },
+  pdf:         { icon: '📄',  label: 'PDF' },
+  spreadsheet: { icon: '📊',  label: 'Spreadsheet' },
+  document:    { icon: '📝',  label: 'Document' },
+  archive:     { icon: '🗜️',  label: 'Archive' },
+  config:      { icon: '⚙️',  label: 'Config' },
+  code:        { icon: '💻',  label: 'Code' },
+  text:        { icon: '📋',  label: 'Text' },
+  unknown:     { icon: '📎',  label: 'File' },
+};
+
+// ── AttachmentPanel component ───────────────────────────────────────────────
+
+interface AttachmentPanelProps {
+  title?: string;           // defaults to "Attachments"
+  files: Attachment[];
+}
+
+export function AttachmentPanel({ title = 'Attachments', files }: AttachmentPanelProps) {
+  const [expandedPreviews, setExpandedPreviews] = useState<Set<string>>(new Set());
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  const togglePreview = (name: string) =>
+    setExpandedPreviews(prev => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+
+  if (!files.length) return null;
+
+  const resolved = files.map(f => ({ ...f, kind: f.kind ?? detectKind(f.name, f.url) }));
+  const images = resolved.filter(f => f.kind === 'image');
+  const videos = resolved.filter(f => f.kind === 'video');
+  const others = resolved.filter(f => f.kind !== 'image' && f.kind !== 'video');
+
+  const isYT = (url: string) => /youtube\.com|youtu\.be/.test(url);
+  const isVimeo = (url: string) => /vimeo\.com/.test(url);
+  const ytEmbed = (url: string) => {
+    const id = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+    return id ? `https://www.youtube.com/embed/${id}` : url;
+  };
+  const vimeoEmbed = (url: string) => {
+    const id = url.match(/vimeo\.com\/(\d+)/)?.[1];
+    return id ? `https://player.vimeo.com/video/${id}` : url;
+  };
+
+  return (
+    <div className={styles.apContainer}>
+      <div className={styles.apHeader}>
+        <span className={styles.apTitle}>📎 {title}</span>
+        <span className={styles.apCount}>{files.length} file{files.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {/* Image thumbnail grid */}
+      {images.length > 0 && (
+        <div className={styles.apImageGrid}>
+          {images.map(f => (
+            <div key={f.name} className={styles.apImageCard}>
+              <img
+                src={f.url}
+                alt={f.name}
+                className={styles.apThumb}
+                onClick={() => setLightboxSrc(f.url)}
+              />
+              <div className={styles.apImageMeta}>
+                <span className={styles.apFileName}>{f.name}</span>
+                {f.size && <span className={styles.apFileSize}>{f.size}</span>}
+              </div>
+              {f.description && <p className={styles.apFileDesc}>{f.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Video players */}
+      {videos.length > 0 && (
+        <div className={styles.apVideoList}>
+          {videos.map(f => (
+            <div key={f.name} className={styles.apVideoCard}>
+              <div className={styles.apVideoLabel}>
+                <span>🎬</span>
+                <span className={styles.apFileName}>{f.name}</span>
+                {f.size && <span className={styles.apFileSize}>{f.size}</span>}
+              </div>
+              {isYT(f.url) ? (
+                <iframe
+                  className={styles.apVideoFrame}
+                  src={ytEmbed(f.url)}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : isVimeo(f.url) ? (
+                <iframe
+                  className={styles.apVideoFrame}
+                  src={vimeoEmbed(f.url)}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video controls className={styles.apVideoNative} src={f.url} />
+              )}
+              {f.description && <p className={styles.apFileDesc}>{f.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Document / archive / config / code / text download cards */}
+      {others.length > 0 && (
+        <div className={styles.apDocList}>
+          {others.map(f => {
+            const meta = kindMeta[f.kind!];
+            const canPreview = ['config','code','text'].includes(f.kind!) && f.preview;
+            const open = expandedPreviews.has(f.name);
+            return (
+              <div key={f.name} className={styles.apDocCard}>
+                <div className={styles.apDocRow}>
+                  <span className={styles.apDocIcon}>{meta.icon}</span>
+                  <div className={styles.apDocInfo}>
+                    <span className={styles.apFileName}>{f.name}</span>
+                    <div className={styles.apDocMeta}>
+                      <span className={`${styles.apKindBadge} ${styles[`apKind_${f.kind}`]}`}>{meta.label}</span>
+                      {f.size && <span className={styles.apFileSize}>{f.size}</span>}
+                      {f.description && <span className={styles.apFileDesc}>{f.description}</span>}
+                    </div>
+                  </div>
+                  <div className={styles.apDocActions}>
+                    {canPreview && (
+                      <button className={styles.apPreviewBtn} onClick={() => togglePreview(f.name)}>
+                        {open ? 'Hide' : 'Preview'}
+                      </button>
+                    )}
+                    <a href={f.url} download={f.name} className={styles.apDownloadBtn} target="_blank" rel="noreferrer">
+                      ↓ Download
+                    </a>
+                  </div>
+                </div>
+                {canPreview && open && (
+                  <div className={styles.apPreviewBlock}>
+                    <pre><code>{f.preview}</code></pre>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Lightbox overlay for images */}
+      {lightboxSrc && (
+        <div className={styles.apLightbox} onClick={() => setLightboxSrc(null)}>
+          <img src={lightboxSrc} alt="full size" className={styles.apLightboxImg} />
+          <button className={styles.apLightboxClose} onClick={() => setLightboxSrc(null)}>✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── shared helpers ──────────────────────────────────────────────────────────
 

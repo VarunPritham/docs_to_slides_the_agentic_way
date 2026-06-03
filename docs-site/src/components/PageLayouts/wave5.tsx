@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import styles from './wave-styles.module.css';
+import type { Attachment } from './wave6';
+import { AttachmentPanel } from './wave6';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    WAVE 5 — COMPLIANCE & REGULATORY
@@ -75,6 +77,7 @@ interface ChangeRequestProps {
   testPlan: string;
   rollbackPlan: string;
   cabApprovals: CabApproval[];
+  attachments?: Attachment[];
 }
 
 const CR_STATUS_COLORS: Record<string, string> = {
@@ -89,12 +92,13 @@ export function ChangeRequest({
   crId, title, type, risk, status, requestor, implementor,
   scheduledStart, scheduledEnd, affectedServices,
   description, businessJustification, implementationSteps,
-  testPlan, rollbackPlan, cabApprovals,
+  testPlan, rollbackPlan, cabApprovals, attachments,
 }: ChangeRequestProps) {
-  const [tab, setTab] = useState<'details' | 'steps' | 'cab'>('details');
+  const [tab, setTab] = useState<'details' | 'steps' | 'cab' | 'attachments'>('details');
 
   const approvedCount = cabApprovals.filter(a => a.status === 'approved').length;
   const rejectedCount = cabApprovals.filter(a => a.status === 'rejected').length;
+  const hasAttachments = attachments && attachments.length > 0;
 
   return (
     <div className={styles.cr}>
@@ -120,12 +124,16 @@ export function ChangeRequest({
 
       {/* Tabs */}
       <div className={styles.tabBar}>
-        {(['details', 'steps', 'cab'] as const).map(t => (
-          <button key={t} className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`}
-            onClick={() => setTab(t)}>
-            {t === 'details' ? '📋 Details' : t === 'steps' ? '🔢 Implementation' : `✅ CAB (${approvedCount}/${cabApprovals.length})`}
-          </button>
-        ))}
+        <button className={`${styles.tabBtn} ${tab === 'details' ? styles.tabActive : ''}`}
+          onClick={() => setTab('details')}>📋 Details</button>
+        <button className={`${styles.tabBtn} ${tab === 'steps' ? styles.tabActive : ''}`}
+          onClick={() => setTab('steps')}>🔢 Implementation</button>
+        <button className={`${styles.tabBtn} ${tab === 'cab' ? styles.tabActive : ''}`}
+          onClick={() => setTab('cab')}>{`✅ CAB (${approvedCount}/${cabApprovals.length})`}</button>
+        {hasAttachments && (
+          <button className={`${styles.tabBtn} ${tab === 'attachments' ? styles.tabActive : ''}`}
+            onClick={() => setTab('attachments')}>📎 Attachments ({attachments!.length})</button>
+        )}
       </div>
 
       <div className={styles.crBody}>
@@ -194,6 +202,10 @@ export function ChangeRequest({
             ))}
           </div>
         )}
+
+        {tab === 'attachments' && hasAttachments && (
+          <AttachmentPanel files={attachments!} />
+        )}
       </div>
     </div>
   );
@@ -234,6 +246,7 @@ interface IncidentPostMortemProps {
   whatWentWell: string[];
   whatToImprove: string[];
   actionItems: ActionItem[];
+  attachments?: Attachment[];
 }
 
 const TIMELINE_COLORS: Record<string, string> = {
@@ -250,10 +263,11 @@ const AI_STATUS_COLORS: Record<string, string> = {
 export function IncidentPostMortem({
   incidentId, title, severity, status, detectedAt, resolvedAt, duration,
   affectedServices, customerImpact, summary, rootCause, contributingFactors,
-  timeline, whatWentWell, whatToImprove, actionItems,
+  timeline, whatWentWell, whatToImprove, actionItems, attachments,
 }: IncidentPostMortemProps) {
-  const [tab, setTab] = useState<'summary' | 'timeline' | 'actions'>('summary');
+  const [tab, setTab] = useState<'summary' | 'timeline' | 'actions' | 'attachments'>('summary');
   const openActions = actionItems.filter(a => a.status !== 'done').length;
+  const hasAttachments = attachments && attachments.length > 0;
 
   return (
     <div className={styles.pir}>
@@ -279,12 +293,16 @@ export function IncidentPostMortem({
 
       {/* Tabs */}
       <div className={styles.tabBar}>
-        {(['summary', 'timeline', 'actions'] as const).map(t => (
-          <button key={t} className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`}
-            onClick={() => setTab(t)}>
-            {t === 'summary' ? '📋 Analysis' : t === 'timeline' ? '⏱ Timeline' : `🎯 Actions (${openActions} open)`}
-          </button>
-        ))}
+        <button className={`${styles.tabBtn} ${tab === 'summary' ? styles.tabActive : ''}`}
+          onClick={() => setTab('summary')}>📋 Analysis</button>
+        <button className={`${styles.tabBtn} ${tab === 'timeline' ? styles.tabActive : ''}`}
+          onClick={() => setTab('timeline')}>⏱ Timeline</button>
+        <button className={`${styles.tabBtn} ${tab === 'actions' ? styles.tabActive : ''}`}
+          onClick={() => setTab('actions')}>{`🎯 Actions (${openActions} open)`}</button>
+        {hasAttachments && (
+          <button className={`${styles.tabBtn} ${tab === 'attachments' ? styles.tabActive : ''}`}
+            onClick={() => setTab('attachments')}>📎 Attachments ({attachments!.length})</button>
+        )}
       </div>
 
       <div className={styles.crBody}>
@@ -362,6 +380,10 @@ export function IncidentPostMortem({
               ))}
             </tbody>
           </table>
+        )}
+
+        {tab === 'attachments' && hasAttachments && (
+          <AttachmentPanel files={attachments!} />
         )}
       </div>
     </div>
@@ -540,6 +562,7 @@ interface ITControlEvidenceProps {
   overallResult: 'effective' | 'ineffective' | 'not-tested';
   evidence: EvidenceEntry[];
   exceptions: ExceptionEntry[];
+  attachments?: Attachment[];
 }
 
 const EVIDENCE_COLORS: Record<EvidenceResult, string> = {
@@ -555,10 +578,11 @@ const OVERALL_COLORS: Record<string, string> = {
 export function ITControlEvidence({
   controlId, controlName, framework, controlObjective, controlType,
   frequency, owner, itgcDomain, lastTested, nextReview,
-  overallResult, evidence, exceptions,
+  overallResult, evidence, exceptions, attachments,
 }: ITControlEvidenceProps) {
-  const [tab, setTab] = useState<'evidence' | 'exceptions'>('evidence');
+  const [tab, setTab] = useState<'evidence' | 'exceptions' | 'attachments'>('evidence');
   const openExceptions = exceptions.filter(e => e.status === 'open').length;
+  const hasAttachments = attachments && attachments.length > 0;
 
   return (
     <div className={styles.itc}>
@@ -600,6 +624,10 @@ export function ITControlEvidence({
           onClick={() => setTab('exceptions')}>
           ⚠️ Exceptions {openExceptions > 0 && `(${openExceptions} open)`}
         </button>
+        {hasAttachments && (
+          <button className={`${styles.tabBtn} ${tab === 'attachments' ? styles.tabActive : ''}`}
+            onClick={() => setTab('attachments')}>📎 Attachments ({attachments!.length})</button>
+        )}
       </div>
 
       <div className={styles.crBody}>
@@ -622,7 +650,13 @@ export function ITControlEvidence({
                     }}>{e.result.replace('-', ' ').toUpperCase()}</span>
                   </td>
                   <td style={{ fontSize: '0.82rem' }}>{e.reviewer}</td>
-                  <td style={{ fontSize: '0.8rem', color: '#2563eb' }}>{e.artefact ?? '—'}</td>
+                  <td>
+                    {e.artefact ? (
+                      <a href={e.artefact} className={styles.apDownloadBtn} target="_blank" rel="noreferrer" download>
+                        ↓ {e.artefact.split('/').pop()}
+                      </a>
+                    ) : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -652,6 +686,10 @@ export function ITControlEvidence({
               </tbody>
             </table>
           )
+        )}
+
+        {tab === 'attachments' && hasAttachments && (
+          <AttachmentPanel files={attachments!} />
         )}
       </div>
     </div>

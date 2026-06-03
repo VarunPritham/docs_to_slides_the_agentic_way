@@ -4,6 +4,8 @@
  */
 import React, { useState, type ReactNode } from 'react';
 import styles from './styles.module.css';
+import type { Attachment } from './wave6';
+import { AttachmentPanel } from './wave6';
 
 /* ================================================================
    META BLOCK — page header with owner / status / dates
@@ -110,6 +112,7 @@ interface ADRProps {
   decision: ReactNode;
   consequences: ReactNode;
   alternatives?: { option: string; reason: string }[];
+  attachments?: Attachment[];
 }
 
 const adrStatus: Record<ADRProps['status'], { label: string; color: string; bg: string }> = {
@@ -119,7 +122,7 @@ const adrStatus: Record<ADRProps['status'], { label: string; color: string; bg: 
   deprecated: { label: 'Deprecated', color: '#92400e', bg: '#fef3c7' },
 };
 
-export function ADR({ id, title, date, status, deciders, context, decision, consequences, alternatives }: ADRProps) {
+export function ADR({ id, title, date, status, deciders, context, decision, consequences, alternatives, attachments }: ADRProps) {
   const s = adrStatus[status];
   return (
     <div className={styles.adr}>
@@ -157,6 +160,9 @@ export function ADR({ id, title, date, status, deciders, context, decision, cons
         <div className={styles.adrSectionLabel}>Consequences</div>
         <div>{consequences}</div>
       </div>
+      {attachments && attachments.length > 0 && (
+        <AttachmentPanel files={attachments} title="Supporting Files" />
+      )}
     </div>
   );
 }
@@ -170,6 +176,7 @@ interface RunbookStepProps {
   severity?: 'low' | 'medium' | 'high' | 'critical';
   children: ReactNode;
   command?: string;
+  attachments?: Attachment[];
 }
 
 const severityClsMap: Record<string, string> = {
@@ -182,7 +189,7 @@ const severityBadgeColors = {
   critical: { badge: '#fee2e2', badgeText: '#991b1b' },
 };
 
-export function RunbookStep({ step, title, severity, children, command }: RunbookStepProps) {
+export function RunbookStep({ step, title, severity, children, command, attachments }: RunbookStepProps) {
   const sevCls = severity ? styles[severityClsMap[severity]] : '';
   const badge = severity ? severityBadgeColors[severity] : null;
   return (
@@ -209,6 +216,9 @@ export function RunbookStep({ step, title, severity, children, command }: Runboo
             📋
           </button>
         </div>
+      )}
+      {attachments && attachments.length > 0 && (
+        <AttachmentPanel files={attachments} title="Step Attachments" />
       )}
     </div>
   );
@@ -277,9 +287,10 @@ interface MeetingNotesProps {
   facilitator: string;
   children: ReactNode;
   actionItems?: { owner: string; task: string; due: string; done?: boolean }[];
+  attachments?: Attachment[];
 }
 
-export function MeetingNotes({ date, attendees, facilitator, children, actionItems }: MeetingNotesProps) {
+export function MeetingNotes({ date, attendees, facilitator, children, actionItems, attachments }: MeetingNotesProps) {
   return (
     <div className={styles.meeting}>
       <div className={styles.meetingHeader}>
@@ -302,6 +313,9 @@ export function MeetingNotes({ date, attendees, facilitator, children, actionIte
             </div>
           ))}
         </div>
+      )}
+      {attachments && attachments.length > 0 && (
+        <AttachmentPanel files={attachments} title="Meeting Files" />
       )}
     </div>
   );
