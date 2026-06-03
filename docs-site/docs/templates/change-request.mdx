@@ -1,0 +1,48 @@
+---
+id: change-request-cr-2026-0142
+title: "CR-2026-0142: Pipeline Server Dependency Upgrade"
+sidebar_label: "📝 Change Request"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { ChangeRequest } from '@site/src/components/PageLayouts/wave5';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="James Liu, Priya Shah" tags={['change-request','cab','release']} />
+
+<InfoPanel type="warning" title="CAB approval required before implementing">
+  This is a Normal change. All CAB approvals must be APPROVED before the maintenance window opens.
+  Emergency rollback procedure is documented in the Rollback Plan tab.
+</InfoPanel>
+
+<ChangeRequest
+  crId="CR-2026-0142"
+  title="Pipeline Server: Upgrade LangGraph 0.1.x → 0.2.x and Pydantic 1.x → 2.x"
+  type="normal"
+  risk="medium"
+  status="pending-cab"
+  requestor="Varun Pritham"
+  implementor="James Liu"
+  scheduledStart="2026-06-07 22:00 BST"
+  scheduledEnd="2026-06-08 02:00 BST"
+  affectedServices={['pipeline-server', 'agent-router', 'docs-site']}
+  description="Upgrade LangGraph from 0.1.x to 0.2.x and Pydantic from 1.x to 2.x on the pipeline server. LangGraph 0.2.x introduces breaking changes to the StateGraph API and edge definition syntax. Pydantic v2 is a full rewrite with a faster Rust core — requires migration of all model definitions from .dict() to .model_dump()."
+  businessJustification="LangGraph 0.1.x reaches end-of-maintenance in Q3 2026. Pydantic v1 is already deprecated. Delaying creates security exposure and blocks adoption of LangSmith tracing (currently in Trial on the Tech Radar) which requires Pydantic v2. Upgrading now aligns with the tech debt register item TD-003."
+  implementationSteps={[
+    { step: 1, action: 'Create feature branch and update requirements.txt — pin exact versions', owner: 'James Liu', duration: '15 min' },
+    { step: 2, action: 'Run automated test suite in dev — expect Pydantic v2 migration failures', owner: 'James Liu', duration: '20 min' },
+    { step: 3, action: 'Fix Pydantic v2 breaking changes: replace .dict() → .model_dump() across all agent files', owner: 'James Liu', duration: '45 min' },
+    { step: 4, action: 'Update LangGraph StateGraph edge syntax per 0.2.x migration guide', owner: 'James Liu', duration: '30 min' },
+    { step: 5, action: 'Run full pipeline end-to-end on 5 sample MDX files — verify slide output identical', owner: 'Varun Pritham', duration: '20 min' },
+    { step: 6, action: 'Deploy to staging via Helm — smoke test /generate and /health endpoints', owner: 'Priya Shah', duration: '15 min' },
+    { step: 7, action: 'Deploy to production — monitor error rate on Grafana for 30 minutes post-deploy', owner: 'Priya Shah', duration: '35 min' },
+  ]}
+  testPlan="Full regression suite (pytest, 47 tests) must pass in dev before staging deploy. E2E pipeline test: submit 5 representative MDX files to /generate. Validate slide count, layout types, and speaker notes match baseline. Monitor pipeline-server error rate < 0.5% on Grafana for 30 min post-deploy. LangSmith traces reviewed to confirm no unexpected agent failures."
+  rollbackPlan="Revert Helm release to previous version using: helm rollback pipeline-server 0 -n ai-platform. Pipeline-server stateless — no DB migration to revert. Full rollback expected < 5 minutes. Confirm with GET /health returning 200 and version field showing previous version string."
+  cabApprovals={[
+    { approver: 'Varun Pritham', role: 'Tech Lead / Change Owner', status: 'approved', comment: 'Tests passing, rollback verified in staging', timestamp: '2026-06-05 14:32' },
+    { approver: 'James Liu', role: 'Senior Engineer / Implementor', status: 'approved', comment: 'All Pydantic v2 migrations complete, 47/47 tests passing', timestamp: '2026-06-05 15:10' },
+    { approver: 'Priya Shah', role: 'SRE / On-call Lead', status: 'pending', comment: undefined, timestamp: undefined },
+    { approver: 'Sarah Chen', role: 'Security Champion', status: 'pending', comment: undefined, timestamp: undefined },
+  ]}
+/>

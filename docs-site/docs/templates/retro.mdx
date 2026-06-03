@@ -1,0 +1,54 @@
+---
+id: retro-sprint-4
+title: "Retrospective — Sprint 4"
+sidebar_label: "🔄 Retro Sprint 4"
+---
+
+import { MetaBlock, RetroBoard, InfoPanel } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Varun Pritham"
+  team="AI Platform"
+  status="live"
+  lastUpdated="2026-05-30"
+  tags={['retro', 'sprint-4', 'team']}
+/>
+
+<InfoPanel type="info" title="Sprint 4 · May 19 – May 30 · 28 story points completed">
+  Facilitated by Varun. 4 attendees. Items collected asynchronously in the doc before the session.
+</InfoPanel>
+
+<RetroBoard
+  items={{
+    start: [
+      { text: 'Async retrospective item collection (like this!)', votes: 4 },
+      { text: 'PR size limits — max 400 lines per PR', votes: 3 },
+      { text: 'Weekly "architecture office hours" slot', votes: 2 },
+    ],
+    stop: [
+      { text: 'Merging without a second review on pipeline agents', votes: 5 },
+      { text: 'Skipping ADRs for "small" decisions that turn out to be big', votes: 4 },
+      { text: 'Late Friday deploys', votes: 3 },
+    ],
+    continue: [
+      { text: 'Component-first approach — shared PageLayouts library saved 3 days', votes: 5 },
+      { text: 'Daily async Slack standup format', votes: 4 },
+      { text: 'Runbook-first incident response', votes: 3 },
+    ],
+    action: [
+      { text: 'Add PR size check to CI (fail >400 lines, warn 200-400)', votes: 4 },
+      { text: 'Create ADR template page and require ADR for any framework change', votes: 3 },
+      { text: 'Block Friday deploys after 3pm — add CI gate', votes: 2 },
+    ],
+  }}
+/>
+
+## Sprint 4 Metrics
+
+| Metric | Sprint 3 | Sprint 4 | Δ |
+|---|---|---|---|
+| Story points completed | 25 | 28 | +12% |
+| PRs merged | 18 | 21 | +17% |
+| Avg PR cycle time | 1.8 days | 1.4 days | -22% |
+| Incidents (P1/P2) | 2 | 0 | ✅ |
+| Test coverage | 74% | 79% | +5pp |

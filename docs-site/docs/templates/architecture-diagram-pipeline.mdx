@@ -1,0 +1,109 @@
+---
+id: architecture-diagram-pipeline
+sidebar_label: "🏗️ Architecture Diagram"
+title: "Architecture Diagrams — DocSlide AI Pipeline"
+---
+
+import { ArchitectureDiagram } from '@site/src/components/PageLayouts/wave6';
+
+<ArchitectureDiagram
+  title="4-Phase Pipeline — High-Level Flowchart"
+  description="End-to-end flow from Docusaurus Generate Slides button click through all four pipeline phases to Slidev presentation output."
+  diagramType="flowchart"
+  owner="varun.pritham"
+  lastUpdated="2026-06-01"
+  sourceFile="docs/diagrams/pipeline-flowchart.mmd"
+  repoUrl="https://gitlab.internal.barclays.com/ai-platform/docslide-ai"
+  mermaid={`flowchart TD
+    A([🖱️ Docusaurus Button Click]) --> B[POST /generate\nFastAPI :8000]
+    B --> C{url_path_to_file}
+    C --> D[.mdx file on disk]
+
+    D --> E[Phase 1: Extraction\n5 agents — Blackboard pattern]
+    E --> E1[mdx_file_reader]
+    E1 --> E2[mdx_cleaner]
+    E2 --> E3[text_extractor]
+    E3 --> E4[attachment_resolver]
+    E4 --> E5[attachment_embed_agent]
+
+    E5 --> F[Phase 2: Content\n4 agents — Agent Router]
+    F --> F1[content_chunker]
+    F1 --> F2[content_type_classifier\n🤖 LLM]
+    F2 --> F3[prose_condenser\n🤖 LLM]
+    F3 --> F4[speaker_notes_writer\n🤖 LLM]
+
+    F4 --> G[Phase 3: Design\n5 agents — Tool Routing]
+    G --> G1[layout_selector]
+    G1 --> G2[code_slide_agent]
+    G2 --> G3[section_break_agent]
+    G3 --> G4[transition_agent]
+    G4 --> G5[pacing_agent]
+
+    G5 --> H[Phase 4: Assembly\n4 agents]
+    H --> H1[frontmatter_generator]
+    H1 --> H2[summary_slide_agent\n🤖 LLM]
+    H2 --> H3[slide_assembler]
+    H3 --> H4[validator_agent]
+
+    H4 --> I[output/slides/page.md]
+    I --> J[npx slidev :3030]
+    J --> K([🎯 Browser opens Slidev])`}
+/>
+
+---
+
+<ArchitectureDiagram
+  title="/generate Request Sequence"
+  description="Sequence diagram showing interactions between the browser, FastAPI server, LangGraph pipeline, Anthropic API, and Slidev during a single slide generation request."
+  diagramType="sequence"
+  owner="james.liu"
+  lastUpdated="2026-05-28"
+  sourceFile="docs/diagrams/pipeline-sequence.mmd"
+  repoUrl="https://gitlab.internal.barclays.com/ai-platform/docslide-ai"
+  mermaid={`sequenceDiagram
+    participant B as Browser
+    participant F as FastAPI :8000
+    participant L as LangGraph Pipeline
+    participant A as Anthropic API
+    participant S as Slidev :3030
+
+    B->>F: POST /generate {url_path}
+    F->>F: url_path_to_file()
+    F->>L: compiled.invoke(initial_state)
+
+    rect rgb(240, 249, 255)
+        note over L: Phase 1 — Extraction (5 agents, no LLM)
+        L->>L: mdx_file_reader → mdx_cleaner → text_extractor
+        L->>L: attachment_resolver → attachment_embed_agent
+    end
+
+    rect rgb(240, 253, 244)
+        note over L,A: Phase 2 — Content (4 agents, 3 LLM calls)
+        L->>L: content_chunker
+        L->>A: classify chunk types (content_type_classifier)
+        A-->>L: prose/code/image/table/list/heading_only
+        L->>A: condense long prose (prose_condenser)
+        A-->>L: bullet-point summaries
+        L->>A: write speaker notes (speaker_notes_writer)
+        A-->>L: presenter notes per slide
+    end
+
+    rect rgb(255, 251, 235)
+        note over L: Phase 3 — Design (5 agents, no LLM)
+        L->>L: layout_selector → code_slide_agent
+        L->>L: section_break_agent → transition_agent → pacing_agent
+    end
+
+    rect rgb(253, 242, 248)
+        note over L,A: Phase 4 — Assembly (4 agents, 1 LLM call)
+        L->>L: frontmatter_generator
+        L->>A: write key takeaways (summary_slide_agent)
+        A-->>L: closing summary slide
+        L->>L: slide_assembler → validator_agent
+    end
+
+    L-->>F: {output_path, slides, validation_errors}
+    F->>S: kill :3030 + npx slidev slides.md
+    S-->>F: listening on :3030
+    F-->>B: {slides_url, slide_count, errors}`}
+/>

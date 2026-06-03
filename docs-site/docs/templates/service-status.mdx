@@ -1,0 +1,52 @@
+---
+id: service-status
+title: Service Status Dashboard
+sidebar_label: 🟢 Service Status
+---
+
+import { MetaBlock, ServiceDashboard, InfoPanel, OnCallRota } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Platform Team"
+  team="Infrastructure"
+  status="live"
+  lastUpdated="2026-06-01"
+  tags={['infrastructure', 'monitoring', 'sre']}
+/>
+
+<ServiceDashboard
+  lastChecked="2 minutes ago"
+  services={[
+    { name: 'API Gateway',         health: 'operational', latency: '42ms',  uptime: '99.98%' },
+    { name: 'Pipeline Server',     health: 'operational', latency: '120ms', uptime: '99.95%' },
+    { name: 'Docusaurus Frontend', health: 'operational', latency: '18ms',  uptime: '100%' },
+    { name: 'Slidev Renderer',     health: 'degraded',    latency: '890ms', uptime: '98.1%', note: 'Elevated latency — investigating' },
+    { name: 'LLM Proxy (Claude)',  health: 'operational', latency: '340ms', uptime: '99.9%' },
+    { name: 'File Storage',        health: 'operational', latency: '5ms',   uptime: '100%' },
+  ]}
+/>
+
+<InfoPanel type="warning" title="Slidev Renderer — Elevated Latency">
+  We're seeing p99 latency spike to ~890ms on the Slidev renderer since 14:30 UTC. 
+  Root cause under investigation. No data loss. API `/generate` endpoint unaffected.
+</InfoPanel>
+
+## On-Call Schedule
+
+<OnCallRota
+  escalation="@platform-lead via PagerDuty"
+  entries={[
+    { name: 'Priya Shah',    week: 'Week 22', start: 'May 26', end: 'Jun 01', primary: true },
+    { name: 'James Liu',     week: 'Week 23', start: 'Jun 02', end: 'Jun 08' },
+    { name: 'Aria Patel',    week: 'Week 24', start: 'Jun 09', end: 'Jun 15' },
+    { name: 'Marcus Reed',   week: 'Week 25', start: 'Jun 16', end: 'Jun 22' },
+  ]}
+/>
+
+## Incident History (last 30 days)
+
+| Date | Service | Duration | Severity | RCA |
+|---|---|---|---|---|
+| 2026-05-20 | LLM Proxy | 14 min | P2 | Rate limit exceeded — auto-scaled |
+| 2026-05-12 | API Gateway | 3 min | P3 | Deploy rollout — canary caught |
+| 2026-05-05 | File Storage | 0 min | P4 | Latency spike, self-resolved |

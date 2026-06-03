@@ -1,0 +1,92 @@
+---
+id: onboarding-guide
+title: Onboarding Guide — AI Platform
+sidebar_label: "🚀 Onboarding Guide"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { OnboardingGuide } from '@site/src/components/PageLayouts/wave4';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  tags={['onboarding','new-joiner','ai-platform']} />
+
+<InfoPanel type="tip" title="Click any task to mark it done — your progress is saved in this tab">
+  Work through the phases in order. The purple dot on the Access Checklist = critical access needed on Day 1.
+</InfoPanel>
+
+<OnboardingGuide
+  role="Software Engineer — AI Platform"
+  team="AI Platform · Barclays Technology"
+  manager="Varun Pritham"
+  buddy="Aria Patel"
+  phases={[
+    {
+      phase: 'pre-start',
+      label: 'Before Day 1',
+      goal: 'Set up accounts and know what to expect',
+      tasks: [
+        { task: 'Accept offer letter and complete HR onboarding forms', owner: 'hr-team' },
+        { task: 'Confirm laptop preferences (Mac/Windows/Linux)', owner: 'it-helpdesk' },
+        { task: 'Read the team handbook (this site!)', link: '/docs/intro' },
+        { task: 'Connect with your buddy on LinkedIn / Slack', owner: 'aria' },
+      ],
+    },
+    {
+      phase: '30',
+      label: 'First 30 Days',
+      goal: 'Understand the system, make your first contribution',
+      tasks: [
+        { task: 'Complete environment setup guide', link: '/docs/templates/onboarding-guide' },
+        { task: 'Read the architecture overview', link: '/docs/intro' },
+        { task: 'Read ADR-001 (why LangGraph)', link: '/docs/templates/adr-001' },
+        { task: 'Run the full pipeline locally end-to-end', owner: 'aria' },
+        { task: 'Shadow on-call rotation for one week', owner: 'priya' },
+        { task: 'Fix your first bug — pick from "good first issue" label on GitLab' },
+        { task: 'Attend sprint planning and retro', owner: 'varun' },
+        { task: 'Meet every team member 1:1 (30 min each)' },
+      ],
+    },
+    {
+      phase: '60',
+      label: 'Days 31–60',
+      goal: 'Own a feature end-to-end',
+      tasks: [
+        { task: 'Lead a sprint story from design to deploy', owner: 'varun' },
+        { task: 'Write or update one runbook', link: '/docs/templates/runbook-pipeline-failure' },
+        { task: 'Review 5 pull requests from teammates' },
+        { task: 'Attend architecture review meeting', owner: 'varun' },
+        { task: 'Complete internal security awareness training', owner: 'security-team' },
+        { task: 'Read and sign the data handling policy' },
+      ],
+    },
+    {
+      phase: '90',
+      label: 'Days 61–90',
+      goal: 'Be a full autonomous contributor',
+      tasks: [
+        { task: 'Take primary on-call for one week', owner: 'priya' },
+        { task: 'Present a tech talk or demo to the team' },
+        { task: 'Identify and log one tech debt item', link: '/docs/templates/tech-debt-register' },
+        { task: 'Propose or comment on an RFC', link: '/docs/templates/rfc-002-async-messaging' },
+        { task: '90-day check-in with manager', owner: 'varun' },
+      ],
+    },
+  ]}
+  accessList={[
+    { system: 'GitLab (internal)',       howToGet: 'Raise IT ticket — auto-approved for your team group', owner: 'it-helpdesk', critical: true },
+    { system: 'Kubernetes (dev cluster)',howToGet: 'Request via ServiceNow — needs team lead approval',   owner: 'varun', critical: true },
+    { system: 'Anthropic API (team key)',howToGet: 'DM @varun — stored in Vault, not in env files',       owner: 'varun', critical: true },
+    { system: 'PagerDuty',              howToGet: 'Added by on-call lead when you join rotation',          owner: 'priya' },
+    { system: 'Grafana (internal)',     howToGet: 'SSO — login with your corp email',                      owner: 'priya' },
+    { system: 'Confluence (this site)', howToGet: 'SSO — auto-provisioned on day 1',                      owner: 'it-helpdesk' },
+    { system: 'Jira / GitLab Issues',   howToGet: 'SSO — auto-provisioned on day 1',                      owner: 'it-helpdesk' },
+    { system: 'Slack — #ai-platform',  howToGet: 'Ask your buddy to add you',                              owner: 'aria' },
+  ]}
+  mustReadPages={[
+    { title: 'Architecture Overview',         link: '/docs/intro',                              why: 'Understand the full 18-agent pipeline before touching any code' },
+    { title: 'Agent Router Pattern',          link: '/docs/agent-router',                       why: 'Core design pattern — everything routes through here' },
+    { title: 'ADR-001: LangGraph over CrewAI', link: '/docs/templates/adr-001',                why: 'Why we made our biggest framework choice' },
+    { title: 'Runbook: Pipeline Failure',     link: '/docs/templates/runbook-pipeline-failure', why: 'Know this before you take on-call' },
+    { title: 'Tech Debt Register',            link: '/docs/templates/tech-debt-register',       why: 'Understand known risks before you start coding' },
+  ]}
+/>

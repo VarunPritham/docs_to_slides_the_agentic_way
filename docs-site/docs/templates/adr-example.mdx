@@ -1,0 +1,83 @@
+---
+id: adr-001
+title: "ADR-001: LangGraph over CrewAI"
+sidebar_label: "📋 ADR-001 LangGraph"
+---
+
+import { MetaBlock, ADR, DecisionTable, InfoPanel } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Varun Pritham"
+  team="AI Platform"
+  status="live"
+  lastUpdated="2026-05-10"
+  reviewedBy="James Liu, Priya Shah"
+  tags={['architecture', 'adr', 'langgraph', 'agents']}
+/>
+
+<ADR
+  id="001"
+  title="Use LangGraph as the multi-agent orchestration framework"
+  date="2026-05-10"
+  status="accepted"
+  deciders={['Varun Pritham', 'James Liu', 'Priya Shah']}
+  context={
+    <>
+      We need to orchestrate 18 specialised agents across 4 pipeline phases to convert
+      MDX documentation into Slidev presentations. The framework must support a shared
+      state (Blackboard pattern), sequential and conditional edges, and be testable
+      locally without a hosted runtime.
+    </>
+  }
+  decision={
+    <>
+      We will use <strong>LangGraph</strong> with a <code>StateGraph(PipelineState)</code>
+      containing 18 nodes and 17 sequential edges. Routing is data-driven via chunk type
+      labels stored in shared state — no conditional graph edges required.
+      All 18 agent functions are pure Python; only 4 make LLM calls.
+    </>
+  }
+  consequences={
+    <ul>
+      <li>✅ Shared <code>PipelineState</code> TypedDict is the single source of truth (Blackboard)</li>
+      <li>✅ Easy to add new agents — one new node + one new edge</li>
+      <li>✅ Local execution, no hosted runtime or API key required beyond the LLM</li>
+      <li>⚠️ Sequential graph means no parallelism yet — Phase 1 agents could run concurrently</li>
+      <li>⚠️ LangGraph API surface changes frequently between minor versions</li>
+    </ul>
+  }
+  alternatives={[
+    { option: 'CrewAI', reason: 'Higher abstraction but less control over state. Agent-to-agent calls add latency and complicate debugging.' },
+    { option: 'AutoGen', reason: 'Great for conversation-style agents; poor fit for pipeline/assembly workloads.' },
+    { option: 'Custom asyncio', reason: 'Maximum control but rebuilds graph plumbing from scratch — not worth the effort.' },
+  ]}
+/>
+
+## Options Compared
+
+<DecisionTable
+  options={[
+    {
+      name: 'LangGraph',
+      chosen: true,
+      pros: ['Explicit state TypedDict', 'Fine-grained node control', 'No hosted runtime', 'Mature ecosystem'],
+      cons: ['Verbose graph setup', 'Frequent API changes'],
+    },
+    {
+      name: 'CrewAI',
+      pros: ['Quick to scaffold', 'Role-based abstraction'],
+      cons: ['Less state control', 'Agent-to-agent calls add latency', 'Harder to test'],
+    },
+    {
+      name: 'AutoGen',
+      pros: ['Great for conversational agents', 'Multi-modal support'],
+      cons: ['Poor fit for pipeline workloads', 'Complex configuration'],
+    },
+  ]}
+/>
+
+<InfoPanel type="note" title="Revisit in Q3 2026">
+  If the pipeline needs parallelism (e.g. Phase 1 agents running concurrently), consider
+  switching to LangGraph's <code>Send</code> API or introducing a fan-out/fan-in pattern.
+  Track in GitHub issue #42.
+</InfoPanel>

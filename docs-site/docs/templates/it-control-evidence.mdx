@@ -1,0 +1,91 @@
+---
+id: it-control-evidence-itgc-001
+title: "ITGC-001: Production Access Control Review"
+sidebar_label: "🔒 IT Control Evidence"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { ITControlEvidence } from '@site/src/components/PageLayouts/wave5';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="Sarah Chen (Security), James Liu" tags={['sox','itgc','access-control','audit']} />
+
+<InfoPanel type="warning" title="Audit evidence — do not modify historical entries">
+  This page is the source of truth for ITGC-001 audit evidence. All entries are immutable once
+  the reviewer signs off. Exceptions must be logged before the quarterly review deadline.
+</InfoPanel>
+
+<ITControlEvidence
+  controlId="ITGC-001"
+  controlName="Production Access Control — Quarterly User Access Review"
+  framework="SOX ITGC / PCI-DSS 7.1"
+  controlObjective="Ensure that access to production systems (Kubernetes cluster, Anthropic API key, Grafana, GitLab production branch) is restricted to authorised personnel only. Stale or excess access is identified and revoked quarterly. Evidence is retained for a minimum of 7 years."
+  controlType="detective"
+  frequency="quarterly"
+  owner="Varun Pritham"
+  itgcDomain="Access Management"
+  lastTested="2026-04-01"
+  nextReview="2026-07-01"
+  overallResult="effective"
+  evidence={[
+    {
+      date: '2026-04-01',
+      evidenceType: 'User Access Report',
+      description: 'Full export of Kubernetes RBAC bindings for ai-platform namespace. 7 users reviewed. 0 excess access found.',
+      result: 'pass',
+      reviewer: 'Sarah Chen',
+      artefact: 'K8S-RBAC-2026-Q1.csv',
+    },
+    {
+      date: '2026-04-01',
+      evidenceType: 'API Key Audit',
+      description: 'Anthropic API key usage log reviewed. Key rotated as per quarterly schedule. Previous key revoked.',
+      result: 'pass',
+      reviewer: 'Varun Pritham',
+      artefact: 'API-KEY-ROTATION-Q1-2026.pdf',
+    },
+    {
+      date: '2026-04-01',
+      evidenceType: 'GitLab Branch Protection',
+      description: 'Production branch protection rules verified: require 2 approvals, no force-push, no direct commits. Rules unchanged.',
+      result: 'pass',
+      reviewer: 'James Liu',
+      artefact: 'GITLAB-BRANCH-RULES-SCREENSHOT-Q1.png',
+    },
+    {
+      date: '2026-04-01',
+      evidenceType: 'Leaver Check',
+      description: 'HR termination report cross-referenced with system access. 1 leaver (David Park, left 2026-03-15) identified. Access revoked 2026-03-14 (1 day before last day — within policy).',
+      result: 'pass',
+      reviewer: 'Sarah Chen',
+      artefact: 'LEAVER-CHECK-Q1-2026.pdf',
+    },
+    {
+      date: '2026-04-01',
+      evidenceType: 'Privileged Access Review',
+      description: 'Cluster-admin role holders reviewed. 2 engineers hold cluster-admin (Varun Pritham, Priya Shah). Business justification on file for both. No changes required.',
+      result: 'pass',
+      reviewer: 'Sarah Chen',
+      artefact: 'PRIV-ACCESS-Q1-2026.pdf',
+    },
+    {
+      date: '2026-01-04',
+      evidenceType: 'User Access Report',
+      description: 'Q4 2025 access review. 8 users reviewed. 1 exception — see EX-001.',
+      result: 'exception',
+      reviewer: 'Sarah Chen',
+      artefact: 'K8S-RBAC-2025-Q4.csv',
+    },
+  ]}
+  exceptions={[
+    {
+      id: 'EX-001',
+      date: '2026-01-04',
+      description: 'Contractor Yuki Tanaka retained dev-cluster write access for 32 days after contract end (2025-12-02 → 2026-01-03). Offboarding ticket not raised by hiring manager.',
+      risk: 'medium',
+      mitigatingControl: 'No production access — dev cluster only. Yuki had no commits or API calls after contract end (confirmed in audit log). Risk limited to dev environment.',
+      remediationDate: '2026-01-03',
+      status: 'remediated',
+    },
+  ]}
+/>

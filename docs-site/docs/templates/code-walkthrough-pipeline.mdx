@@ -1,0 +1,297 @@
+---
+id: code-walkthrough-pipeline
+sidebar_label: "🚶 Code Walkthrough"
+title: "Code Walkthrough — 18-Agent LangGraph Pipeline"
+---
+
+import { CodeWalkthrough } from '@site/src/components/PageLayouts/wave6';
+
+<CodeWalkthrough
+  title="18-Agent LangGraph Pipeline"
+  repo="https://gitlab.internal.barclays.com/ai-platform/docslide-ai"
+  estimatedMinutes={25}
+  stops={[
+    {
+      id: "state",
+      title: "PipelineState — The Blackboard",
+      file: "state.py",
+      lines: "1–32",
+      language: "python",
+      code: `from typing import TypedDict, Optional
+from langgraph.graph import StateGraph
+
+class PipelineState(TypedDict):
+    # ── Input ──────────────────────────────────────────
+    source_path: str
+    output_dir: str
+
+    # ── Phase 1: Extraction ────────────────────────────
+    raw_content: str
+    cleaned_content: str
+    base_directory: str
+    file_metadata: dict
+    headings: list
+    code_blocks: list
+    attachments: list
+
+    # ── Phase 2: Content ───────────────────────────────
+    chunks: list
+    pacing_report: dict
+
+    # ── Phase 3 & 4: Design + Assembly ────────────────
+    slides: list
+    frontmatter: str
+    summary_slide: str
+    output_path: str
+    validation_errors: list`,
+      explanation: "PipelineState is a TypedDict that acts as the shared Blackboard for all 18 agents. Every field is written by exactly one agent and read by downstream agents. LangGraph passes the full state object between every node in the graph.",
+      whyItMatters: "Using a TypedDict as the Blackboard gives you static type checking across the entire pipeline. If an agent tries to read a field that hasn't been written yet, mypy catches it before runtime — critical in a 18-node pipeline.",
+      relatedStops: ["graph", "extraction"]
+    },
+    {
+      id: "graph",
+      title: "LangGraph StateGraph Definition",
+      file: "graph.py",
+      lines: "1–55",
+      language: "python",
+      code: `from langgraph.graph import StateGraph, END
+from state import PipelineState
+from agents.extraction import (
+    mdx_file_reader, mdx_cleaner, text_extractor,
+    attachment_resolver, attachment_embed_agent,
+)
+from agents.content import (
+    content_chunker, content_type_classifier,
+    prose_condenser, speaker_notes_writer,
+)
+from agents.design import (
+    layout_selector, code_slide_agent, section_break_agent,
+    transition_agent, pacing_agent,
+)
+from agents.assembly import (
+    frontmatter_generator, summary_slide_agent,
+    slide_assembler, validator_agent,
+)
+
+def build_graph() -> StateGraph:
+    g = StateGraph(PipelineState)
+
+    # Phase 1 — Extraction
+    g.add_node("mdx_file_reader",        mdx_file_reader)
+    g.add_node("mdx_cleaner",            mdx_cleaner)
+    g.add_node("text_extractor",         text_extractor)
+    g.add_node("attachment_resolver",    attachment_resolver)
+    g.add_node("attachment_embed_agent", attachment_embed_agent)
+
+    # Phase 2 — Content
+    g.add_node("content_chunker",           content_chunker)
+    g.add_node("content_type_classifier",   content_type_classifier)
+    g.add_node("prose_condenser",           prose_condenser)
+    g.add_node("speaker_notes_writer",      speaker_notes_writer)
+
+    # ... 9 more nodes for phases 3 & 4
+    g.set_entry_point("mdx_file_reader")
+    g.add_edge("mdx_file_reader", "mdx_cleaner")
+    g.add_edge("mdx_cleaner", "text_extractor")
+    # ... 14 more sequential edges
+    g.add_edge("validator_agent", END)
+    return g`,
+      explanation: "graph.py wires together all 18 agent functions as LangGraph nodes connected by 17 sequential edges. All edges are unconditional — routing is data-driven (via chunk_type labels in state), not graph-structure-driven.",
+      whyItMatters: "Keeping the graph topology simple (18 nodes, 17 sequential edges, no conditional forks) makes the pipeline trivially debuggable. You can add or reorder phases without touching the routing logic.",
+      relatedStops: ["state", "content"]
+    },
+    {
+      id: "extraction",
+      title: "mdx_file_reader Agent",
+      file: "agents/extraction.py",
+      lines: "14–38",
+      language: "python",
+      code: `from tools.file_tools import read_file, get_base_directory, get_file_metadata
+
+def mdx_file_reader(state: PipelineState) -> dict:
+    """Phase 1 — Agent 1: Read the source MDX file."""
+    source_path = state["source_path"]
+
+    raw_content = read_file(source_path)
+    base_directory = get_base_directory(source_path)
+    file_metadata = get_file_metadata(source_path)
+
+    return {
+        "raw_content": raw_content,
+        "base_directory": base_directory,
+        "file_metadata": file_metadata,
+    }`,
+      explanation: "The first agent in the pipeline. It reads the source MDX file from disk and writes three facts to the Blackboard: the raw file content, the directory it lives in (needed for resolving relative attachment paths), and basic file metadata.",
+      whyItMatters: "Separating file I/O into its own dedicated agent means every downstream agent can rely on raw_content always being populated. It also makes the pipeline testable — you can inject any string as raw_content without touching the filesystem.",
+      relatedStops: ["state", "content"]
+    },
+    {
+      id: "content",
+      title: "content_type_classifier with LLM call",
+      file: "agents/content.py",
+      lines: "68–105",
+      language: "python",
+      code: `from llm import get_llm
+from tools.text_tools import count_words
+
+VALID_TYPES = {"prose", "code", "image", "table", "list", "heading_only"}
+
+def _mock_classify(chunk: dict) -> str:
+    if chunk.get("code_blocks"):        return "code"
+    if chunk.get("attachments"):        return "image"
+    body = chunk.get("body", "")
+    if not body.strip():                return "heading_only"
+    if "|" in body:                     return "table"
+    if body.lstrip().startswith(("-", "*", "1.")): return "list"
+    return "prose"
+
+def content_type_classifier(state: PipelineState) -> dict:
+    """Phase 2 — Agent 2: Label each chunk with its content type."""
+    llm = get_llm()
+    updated_chunks = []
+
+    for chunk in state["chunks"]:
+        prompt = (
+            f"Classify this documentation section as one of: "
+            f"prose, code, image, table, list, heading_only.\n\n"
+            f"Heading: {chunk['heading']}\n"
+            f"Body (first 300 chars): {chunk['body'][:300]}\n"
+            f"Has code blocks: {bool(chunk.get('code_blocks'))}\n\n"
+            f"Reply with just the type, nothing else."
+        )
+        try:
+            result = llm.invoke(prompt).content.strip().lower()
+            chunk_type = result if result in VALID_TYPES else _mock_classify(chunk)
+        except Exception:
+            chunk_type = _mock_classify(chunk)
+
+        updated_chunks.append({**chunk, "chunk_type": chunk_type})
+
+    return {"chunks": updated_chunks}`,
+      explanation: "The Agent Router of the pipeline. It labels every chunk with one of 6 types. The label then drives all downstream behaviour — ProseCondenser skips non-prose, CodeSlideAgent skips non-code, LayoutSelector uses it as a lookup key.",
+      whyItMatters: "Centralising classification in a single agent means the routing vocabulary (prose/code/image/table/list/heading_only) is defined in exactly one place. If you add a new content type, you only change this file.",
+      relatedStops: ["design"]
+    },
+    {
+      id: "design",
+      title: "layout_selector with lookup_layout tool",
+      file: "agents/design.py",
+      lines: "12–52",
+      language: "python",
+      code: `from tools.layout_tools import lookup_layout, get_image_dimensions
+
+def layout_selector(state: PipelineState) -> dict:
+    """Phase 3 — Agent 1: Assign a Slidev layout to each chunk."""
+    slides = []
+
+    for chunk in state["chunks"]:
+        chunk_type = chunk.get("chunk_type", "prose")
+        word_count = chunk.get("word_count", 0)
+
+        # Special case: image chunks — use PNG dimensions to pick layout
+        if chunk_type == "image" and chunk.get("attachments"):
+            img_path = chunk["attachments"][0].get("resolved_path", "")
+            dims = get_image_dimensions(img_path)
+            layout = "image-right" if dims.get("landscape") else "center"
+        else:
+            layout = lookup_layout(chunk_type, word_count)
+
+        slides.append({
+            "slide_id":          chunk["chunk_id"],
+            "heading":           chunk["heading"],
+            "heading_level":     chunk.get("heading_level", 2),
+            "layout":            layout,
+            "content":           _render_content(chunk),
+            "notes":             "",
+            "transition":        "",
+            "estimated_seconds": 0,
+        })
+
+    return {"slides": slides}`,
+      explanation: "The first design agent. It converts chunks into slide objects by assigning Slidev layout names. The layout is determined by a (chunk_type, density) lookup table in layout_tools.py — no LLM needed.",
+      whyItMatters: "Tool Routing pattern: this agent imports only from layout_tools. It physically cannot call code_tools or text_tools — enforced by Python imports. This prevents agents from accidentally reaching outside their scope.",
+      relatedStops: ["tools"]
+    },
+    {
+      id: "server",
+      title: "FastAPI /generate endpoint",
+      file: "server.py",
+      lines: "38–75",
+      language: "python",
+      code: `from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from graph import build_graph
+
+app = FastAPI(title="DocSlide AI Pipeline Server")
+app.add_middleware(CORSMiddleware, allow_origins=["*"],
+                   allow_methods=["*"], allow_headers=["*"])
+
+class GenerateRequest(BaseModel):
+    url_path: str   # e.g. /docs/templates/my-page
+
+@app.post("/generate")
+async def generate_slides(req: GenerateRequest):
+    mdx_path = url_path_to_file(req.url_path)
+    if not os.path.exists(mdx_path):
+        raise HTTPException(status_code=404, detail=f"File not found: {mdx_path}")
+
+    output_dir = os.path.join(BASE_DIR, "output", "slides")
+    graph = build_graph()
+    compiled = graph.compile()
+
+    result = compiled.invoke({
+        "source_path": mdx_path,
+        "output_dir":  output_dir,
+    })
+
+    await _restart_slidev(result["output_path"])
+    return {
+        "slides_url":  "http://localhost:3030",
+        "slide_count": len(result.get("slides", [])),
+        "output_path": result["output_path"],
+        "errors":      result.get("validation_errors", []),
+    }`,
+      explanation: "The FastAPI bridge between the Docusaurus button and the LangGraph pipeline. It receives the doc URL path, resolves it to a .mdx file on disk, invokes the compiled pipeline, restarts the Slidev server with the new output, and returns the slides URL.",
+      whyItMatters: "The server is thin by design — it does no processing itself. All logic lives in the pipeline. This means you can test the entire pipeline via main.py CLI without running FastAPI at all.",
+      relatedStops: ["graph"]
+    },
+    {
+      id: "tools",
+      title: "lookup_layout — the layout map",
+      file: "tools/layout_tools.py",
+      lines: "1–42",
+      language: "python",
+      code: `LAYOUT_MAP = {
+    ("heading_only", "any"):  "section",
+    ("image",        "low"):  "image-right",
+    ("image",        "high"): "center",
+    ("code",         "low"):  "default",
+    ("code",         "high"): "center",
+    ("table",        "any"):  "default",
+    ("list",         "any"):  "default",
+    ("prose",        "low"):  "default",
+    ("prose",        "high"): "two-cols",
+}
+
+def lookup_layout(chunk_type: str, word_count: int) -> str:
+    """Return the Slidev layout name for a given chunk type and density."""
+    density = "high" if word_count > 80 else "low"
+
+    # Try exact match first
+    result = LAYOUT_MAP.get((chunk_type, density))
+    if result:
+        return result
+
+    # Fall back to "any" wildcard
+    result = LAYOUT_MAP.get((chunk_type, "any"))
+    if result:
+        return result
+
+    return "default"`,
+      explanation: "A pure lookup function with zero side effects. It maps (chunk_type, density) pairs to Slidev layout names. Density is computed from word count — chunks with >80 words get a different layout than short ones.",
+      whyItMatters: "Keeping the layout logic in a pure function (no LLM, no state) makes it trivially testable. All 9 combinations can be verified with a 9-line pytest table test. This is the Tool Routing pattern in its simplest form.",
+      relatedStops: ["design", "content"]
+    }
+  ]}
+/>

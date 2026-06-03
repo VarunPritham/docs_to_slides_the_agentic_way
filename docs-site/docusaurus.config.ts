@@ -1,66 +1,84 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+// ═══════════════════════════════════════════════════════════════
+// BARCLAYS BRANDING — replace all REPLACE markers below
+//
+//  1. title       → e.g. "Barclays Engineering Hub"
+//  2. tagline     → your team's strapline
+//  3. favicon     → drop barclays-favicon.ico into static/img/
+//  4. url         → your internal hosting URL
+//  5. navbar logo → drop barclays-logo.svg into static/img/
+//  6. navbar title→ your hub name
+//  7. footer copy → Barclays copyright line
+// ═══════════════════════════════════════════════════════════════
 
 const config: Config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
-  favicon: 'img/favicon.ico',
+  title: 'DocSlide AI',        // REPLACE → 'Barclays Engineering Hub'
+  tagline: 'Docs to Slidev presentations — powered by 18 AI agents', // REPLACE → your strapline
+  favicon: 'img/favicon.ico', // REPLACE → 'img/barclays-favicon.ico'
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: true,
   },
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  url: 'https://your-docusaurus-site.example.com', // REPLACE → internal hosting URL e.g. https://docs.internal.barclays.com
   baseUrl: '/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'varunpritham', // REPLACE → 'barclays'
+  projectName: 'docusaurus-to-slidev', // REPLACE → your repo name
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
   },
 
+  /* ── Themes ──────────────────────────────────────────────── */
+  themes: [
+    'docusaurus-theme-openapi-docs',
+    '@docusaurus/theme-live-codeblock',
+    '@docusaurus/theme-mermaid',
+  ],
+
+  markdown: {
+    mermaid: true,
+  },
+
+  /* ── Plugins ─────────────────────────────────────────────── */
+  plugins: [
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'api',
+        docsPluginId: 'classic',
+        config: {
+          pipeline: {
+            specPath: 'static/openapi.yaml',
+            outputDir: 'docs/api',
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          },
+        },
+      },
+    ],
+  ],
+
+  /* ── Presets ─────────────────────────────────────────────── */
   presets: [
     [
       'classic',
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          docItemComponent: '@theme/ApiItem',   // OpenAPI page layout
+          editUrl: undefined,
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,                             // hide blog for cleaner nav
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -68,81 +86,116 @@ const config: Config = {
     ],
   ],
 
+  /* ── Theme config ────────────────────────────────────────── */
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+
+    /* Dark mode default, respects system preference */
     colorMode: {
+      defaultMode: 'dark',
+      disableSwitch: false,
       respectPrefersColorScheme: true,
     },
+
+    /* Live code blocks */
+    liveCodeBlock: {
+      playgroundPosition: 'bottom',
+    },
+
+    /* Announcement bar — REPLACE content/colour for Barclays */
+    announcementBar: {
+      id: 'launch',
+      content: '🚀 <strong>DocSlide AI</strong> — click "Generate Slides" on any doc page to create a Slidev deck instantly',
+      backgroundColor: '#003087',
+      textColor: '#ffffff',
+      isCloseable: true,
+    },
+
+    /* ── NAVBAR ─────────────────────────────────────────────
+       REPLACE:
+         title  → 'Barclays Engineering Hub'  (or leave blank if logo says it all)
+         logo.src → 'img/barclays-logo.svg'   (drop file in static/img/)
+         logo.alt → 'Barclays'
+         GitHub href → your internal Bitbucket/GitLab URL or remove entirely
+    ─────────────────────────────────────────────────────── */
     navbar: {
-      title: 'My Site',
+      title: 'DocSlide AI',          // REPLACE → 'Barclays Engineering Hub'
       logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        alt: 'DocSlide AI',          // REPLACE → 'Barclays'
+        src: 'img/logo.svg',         // REPLACE → 'img/barclays-logo.svg'
+        // srcDark: 'img/barclays-logo-white.svg',  // ← uncomment for dark-mode logo variant
       },
+      hideOnScroll: false,
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Docs',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
-          label: 'GitHub',
+          to: '/docs/agent-router',
+          label: 'Agent Router',
+          position: 'left',
+        },
+        {
+          to: '/docs/api',
+          label: 'API Reference',
+          position: 'left',
+        },
+        // REPLACE href → your internal Bitbucket / GitLab URL, or remove this item
+        {
+          href: 'https://github.com/varunpritham/docusaurus-to-slidev',
           position: 'right',
+          className: 'header-github-link',
+          'aria-label': 'GitHub',
+          label: 'GitHub',
         },
       ],
     },
+
+    /* Footer */
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
-          title: 'Docs',
+          title: 'Learn',
           items: [
-            {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
+            { label: 'Introduction', to: '/docs/intro' },
+            { label: 'Agent Router Pattern', to: '/docs/agent-router' },
           ],
         },
         {
-          title: 'Community',
+          title: 'API',
           items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
-            },
+            { label: 'API Reference', to: '/docs/api' },
+            { label: 'POST /generate', to: '/docs/api' },
           ],
         },
         {
-          title: 'More',
+          title: 'Project',
           items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/varunpritham/docusaurus-to-slidev',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      // REPLACE → '© 2026 Barclays Bank PLC. Internal use only. | Legal | Privacy'
+      copyright: `© ${new Date().getFullYear()} DocSlide AI. Built with Docusaurus.`,
     },
+
+    /* Mermaid diagram theming */
+    mermaid: {
+      theme: { light: 'neutral', dark: 'dark' },
+    },
+
+    /* Code syntax highlighting */
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: prismThemes.oneLight,
+      darkTheme: prismThemes.oneDark,
+      additionalLanguages: ['python', 'yaml', 'bash', 'json'],
     },
   } satisfies Preset.ThemeConfig,
 };

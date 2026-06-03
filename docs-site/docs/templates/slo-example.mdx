@@ -1,0 +1,45 @@
+---
+id: slo-pipeline-server
+title: "SLO: Pipeline Server"
+sidebar_label: "📊 SLO: Pipeline Server"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { SLODefinition } from '@site/src/components/PageLayouts/wave2';
+
+<MetaBlock owner="Priya Shah" team="Infrastructure" status="live" lastUpdated="2026-06-01"
+  tags={['slo','sre','reliability','pipeline']} />
+
+<SLODefinition slo={{
+  service: 'Pipeline Server (POST /generate)',
+  owner: 'Priya Shah',
+  period: 'Rolling 30 days',
+  target: 99.5,
+  currentUptime: 99.94,
+  errorBudgetMinutes: 216,
+  errorBudgetConsumed: 12,
+  slis: [
+    {
+      name: 'Request Success Rate',
+      description: 'Percentage of POST /generate requests returning 2xx within 10s',
+      measurement: 'sum(rate(http_requests_total{status=~"2xx"}[5m])) / sum(rate(http_requests_total[5m]))',
+    },
+    {
+      name: 'Pipeline Latency P99',
+      description: 'p99 end-to-end latency from request receipt to Slidev URL returned',
+      measurement: 'histogram_quantile(0.99, rate(pipeline_duration_seconds_bucket[5m]))',
+    },
+    {
+      name: 'Slidev Launch Success',
+      description: 'Percentage of generate jobs where Slidev successfully starts on :3030',
+      measurement: 'sum(pipeline_slidev_launch_success_total) / sum(pipeline_jobs_total)',
+    },
+  ],
+  alertPolicy: 'Alert when error budget burn rate exceeds 2x for 1 hour (fast burn) or 1x for 6 hours (slow burn). PagerDuty → on-call SRE. Slack #platform-alerts for all severity levels.',
+  exhaustionPolicy: 'If error budget is exhausted, freeze all non-critical deployments to the pipeline server. Require explicit SRE sign-off to resume. Conduct post-mortem within 48 hours.',
+}} />
+
+<InfoPanel type="tip" title="Error budget math">
+  At 99.5% target over 30 days: total allowed downtime = 30 × 24 × 60 × 0.005 = **216 minutes**.
+  We have consumed ~26 minutes so far this period (12%). On track — no deployment freeze required.
+</InfoPanel>

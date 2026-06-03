@@ -1,0 +1,54 @@
+---
+id: tech-radar
+title: Technology Radar
+sidebar_label: "📡 Tech Radar"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { TechRadar } from '@site/src/components/PageLayouts/wave4';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="James Liu, Priya Shah" tags={['tech-radar','architecture','standards']} />
+
+<InfoPanel type="info" title="Filter by ring or quadrant using the buttons below">
+  NEW = added this quarter. Arrows show movement between rings vs last quarter. Use the Thoughtworks framework as reference.
+</InfoPanel>
+
+<TechRadar
+  lastUpdated="June 2026"
+  owner="AI Platform · Architecture Guild"
+  entries={[
+    { name: 'LangGraph', ring: 'adopt', quadrant: 'frameworks',
+      description: 'Our standard multi-agent orchestration library. StateGraph pattern proven in production across 18-agent pipeline. Well-tested, active development.', isNew: false },
+    { name: 'FastAPI', ring: 'adopt', quadrant: 'frameworks',
+      description: 'Standard Python async web framework. Used for pipeline server and internal microservices. Excellent OpenAPI auto-generation.', isNew: false },
+    { name: 'Docusaurus', ring: 'adopt', quadrant: 'tools',
+      description: 'Standard documentation platform. MDX support, plugin ecosystem, and easy theming make it the right choice for internal knowledge hubs.', isNew: false },
+    { name: 'Python 3.11+', ring: 'adopt', quadrant: 'languages',
+      description: 'Required Python version for all new services. Performance improvements in 3.11+ are material for LLM pipeline workloads.', isNew: false },
+    { name: 'TypeScript', ring: 'adopt', quadrant: 'languages',
+      description: 'Mandatory for all frontend code including Docusaurus components. No plain JavaScript in new projects.', isNew: false },
+    { name: 'Kubernetes (internal)', ring: 'adopt', quadrant: 'platforms',
+      description: 'Internal EKS clusters are the standard deployment target. All production services must be containerised and deployed via Helm.', isNew: false },
+    { name: 'Slidev', ring: 'trial', quadrant: 'tools',
+      description: 'Markdown-based presentation framework. Adopted for the DocSlide AI output format. Good developer experience but small community vs Reveal.js.', isNew: false },
+    { name: 'LangSmith', ring: 'trial', quadrant: 'tools',
+      description: 'LLM observability and tracing platform. In trial for pipeline debugging and LLM call monitoring. Evaluating cost vs open-source alternatives.', isNew: true },
+    { name: 'Pydantic v2', ring: 'trial', quadrant: 'frameworks',
+      description: 'Runtime validation for Python data models. Evaluating as a replacement for plain TypedDict in PipelineState to catch malformed agent outputs earlier.', isNew: true },
+    { name: 'Redis Streams', ring: 'trial', quadrant: 'platforms',
+      description: 'Lightweight message bus for async pipeline events (RFC-002). Already in infrastructure stack. In trial as an alternative to Kafka for low-throughput event workloads.', isNew: true, movedFrom: 'assess' },
+    { name: 'CrewAI', ring: 'assess', quadrant: 'frameworks',
+      description: 'High-level multi-agent framework. We chose LangGraph over CrewAI (ADR-001) but worth monitoring as the ecosystem matures. Not recommended for new projects.', isNew: false },
+    { name: 'OpenTelemetry', ring: 'assess', quadrant: 'tools',
+      description: 'Vendor-neutral observability instrumentation. Assessing for pipeline tracing to replace custom logging. Aligns with internal platform team roadmap.', isNew: true },
+    { name: 'Kafka', ring: 'assess', quadrant: 'platforms',
+      description: 'Enterprise message streaming. Powerful but significant ops overhead for our use case. Assessing Redis Streams as a lighter alternative first (RFC-002).', isNew: false },
+    { name: 'AutoGen', ring: 'hold', quadrant: 'frameworks',
+      description: 'Conversational multi-agent framework from Microsoft. Not suitable for pipeline/assembly workloads. Poor fit for our Blackboard pattern. Do not start new work.', isNew: false },
+    { name: 'Plain JavaScript (no TS)', ring: 'hold', quadrant: 'languages',
+      description: 'All frontend code must use TypeScript. New JS-only files will be rejected in code review.', isNew: false },
+    { name: 'Direct os.environ access in agents', ring: 'hold', quadrant: 'tools',
+      description: 'Pattern of reading env vars directly in agent functions. All config should go through llm.py LLM factory or a dedicated config module. Existing uses are tech debt.', isNew: false },
+  ]}
+/>

@@ -1,0 +1,60 @@
+---
+id: dora-metrics
+title: DORA Metrics — AI Platform
+sidebar_label: "📈 DORA Metrics"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { DORAMetrics } from '@site/src/components/PageLayouts/wave2';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  tags={['dora','devops','metrics','engineering-health']} />
+
+<DORAMetrics
+  team="AI Platform Team"
+  period="Q2 2026 (Apr – Jun)"
+  notes="Trend arrows show movement vs Q1 2026. DORA Elite benchmarks shown for reference. Deployment Frequency and Lead Time improved significantly after adopting trunk-based development in Sprint 3."
+  metrics={[
+    {
+      name: 'Deployment Frequency',
+      value: '4.2 / week',
+      trend: 'up',
+      rating: 'elite',
+      description: 'How often we successfully release to production.',
+      benchmark: 'On-demand (multiple deploys/day)',
+    },
+    {
+      name: 'Lead Time for Changes',
+      value: '1.4 days',
+      trend: 'down',
+      rating: 'high',
+      description: 'Time from commit to running in production.',
+      benchmark: '< 1 hour',
+    },
+    {
+      name: 'Mean Time to Recovery',
+      value: '38 min',
+      trend: 'down',
+      rating: 'elite',
+      description: 'How quickly we restore service after an incident.',
+      benchmark: '< 1 hour',
+    },
+    {
+      name: 'Change Failure Rate',
+      value: '4.8%',
+      trend: 'down',
+      rating: 'high',
+      description: 'Percentage of deployments causing a production failure.',
+      benchmark: '0–15%',
+    },
+  ]}
+/>
+
+## Improvement Initiatives
+
+| Initiative | Owner | Target | Impact on metric |
+|---|---|---|---|
+| Async pipeline (RFC-002) | James Liu | Sprint 5 | ↓ Lead Time |
+| Automated rollback on failure rate spike | Priya Shah | Sprint 6 | ↓ MTTR, ↓ CFR |
+| PR size limits (max 400 lines) | Team | Now | ↑ Deployment Frequency |
+| Phase 1 parallelism | James Liu | Sprint 5 | ↑ Deployment Frequency |

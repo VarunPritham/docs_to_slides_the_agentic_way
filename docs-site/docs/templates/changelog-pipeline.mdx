@@ -1,0 +1,115 @@
+---
+id: changelog-pipeline
+sidebar_label: "📋 Changelog"
+title: "Changelog — pipeline-server"
+---
+
+import { ChangelogPage } from '@site/src/components/PageLayouts/wave6';
+
+<ChangelogPage
+  repoUrl="https://gitlab.internal.barclays.com/ai-platform/docslide-ai"
+  releases={[
+    {
+      version: "v1.4.0",
+      date: "2026-06-01",
+      status: "latest",
+      summary: "Major upgrade to LangGraph 0.2.x and Anthropic SDK v1 with breaking state API changes.",
+      changes: [
+        {
+          type: "feat",
+          description: "Add streaming support to /generate endpoint — server-sent events for real-time progress.",
+          pr: "#287",
+          author: "varun.pritham"
+        },
+        {
+          type: "feat",
+          description: "Add /health endpoint with dependency checks for LLM provider and Slidev port.",
+          pr: "#285",
+          author: "james.liu"
+        },
+        {
+          type: "fix",
+          description: "Fix race condition in _restart_slidev when previous process had not fully exited.",
+          pr: "#284",
+          author: "priya.shah"
+        },
+        {
+          type: "breaking",
+          description: "Upgrade to LangGraph 0.2.x — PipelineState reducers must now be declared explicitly. Update state.py annotations.",
+          pr: "#281",
+          author: "varun.pritham"
+        }
+      ]
+    },
+    {
+      version: "v1.3.2",
+      date: "2026-05-10",
+      status: "stable",
+      summary: "Stability and performance patch release.",
+      changes: [
+        {
+          type: "fix",
+          description: "Fix attachment_resolver crashing on Windows-style backslash paths in source MDX.",
+          pr: "#276",
+          author: "james.liu"
+        },
+        {
+          type: "fix",
+          description: "Fix content_type_classifier fallback not handling empty chunk body gracefully.",
+          pr: "#274",
+          author: "priya.shah"
+        },
+        {
+          type: "fix",
+          description: "Fix validator_agent false-positive JSX detection on angle-bracket generics in TypeScript code blocks.",
+          pr: "#271",
+          author: "varun.pritham"
+        },
+        {
+          type: "perf",
+          description: "Batch Anthropic LLM calls for speaker_notes_writer — reduce p95 latency by ~40% on 20+ chunk documents.",
+          pr: "#268",
+          author: "james.liu"
+        }
+      ]
+    },
+    {
+      version: "v1.3.0",
+      date: "2026-04-15",
+      status: "stable",
+      summary: "New design agents, Databricks LLM support, and the PacingAgent.",
+      changes: [
+        {
+          type: "feat",
+          description: "Add Databricks LLM provider — set LLM_PROVIDER=databricks to use Llama 3.1 70B via Databricks serving.",
+          pr: "#261",
+          author: "varun.pritham"
+        },
+        {
+          type: "feat",
+          description: "Add pacing_agent with over-dense slide detection and total estimated duration in /generate response.",
+          pr: "#258",
+          author: "priya.shah"
+        },
+        {
+          type: "feat",
+          description: "Add section_break_agent — automatically inserts Slidev section separator slides before every H2 heading.",
+          pr: "#254",
+          author: "james.liu"
+        },
+        {
+          type: "feat",
+          description: "Add ENABLE_LANGSMITH env var to trace pipeline runs in LangSmith for debugging.",
+          pr: "#250",
+          author: "varun.pritham"
+        },
+        {
+          type: "deprecated",
+          description: "Deprecate direct use of main.py CLI in production — use the FastAPI server instead. CLI will be removed in v2.0.",
+          pr: "#248",
+          author: "varun.pritham"
+        }
+      ]
+    }
+  ]}
+/>

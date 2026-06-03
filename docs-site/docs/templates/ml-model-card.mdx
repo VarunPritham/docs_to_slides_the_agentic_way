@@ -1,0 +1,48 @@
+---
+id: ml-model-card-content-classifier
+title: "Model Card: Content Type Classifier"
+sidebar_label: "🤖 ML Model Card"
+---
+
+import { MetaBlock } from '@site/src/components/PageLayouts';
+import { MLModelCard } from '@site/src/components/PageLayouts/wave3';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="James Liu" tags={['model-card','llm','classification','mrm']} />
+
+<MLModelCard
+  modelId="MDL-001"
+  name="Content Type Classifier"
+  version="claude-3-5-haiku"
+  owner="Varun Pritham"
+  team="AI Platform"
+  status="production"
+  riskTier="tier-3"
+  lastValidated="2026-05-15"
+  nextReview="2026-11-15"
+  validatedBy="James Liu"
+  regulatoryFramework="SR 11-7 / PRA SS1/23"
+  purpose="Classifies each content chunk extracted from an MDX document into one of 6 types: prose, code, image, table, list, heading_only. Used by the Agent Router pattern to dispatch chunks to the correct downstream processing agent."
+  trainingData="Zero-shot classification using Claude claude-3-5-haiku via Anthropic API. No fine-tuning. Model relies on in-context examples and structured prompt. No training data retention."
+  inputFeatures={['chunk_heading', 'chunk_body_preview_300chars', 'has_code_blocks_bool', 'has_image_attachments_bool', 'has_table_pipes_bool']}
+  outputDescription="Single string from enum: prose | code | image | table | list | heading_only. Used as routing key for downstream agents. Invalid outputs trigger rule-based fallback."
+  performanceMetrics={[
+    { name: 'Classification Accuracy', value: '94.2%', threshold: '> 90%', passing: true },
+    { name: 'Fallback Rate', value: '2.1%', threshold: '< 10%', passing: true },
+    { name: 'Avg Latency', value: '340ms', threshold: '< 2000ms', passing: true },
+    { name: 'Token Cost / Doc', value: '$0.0008', threshold: '< $0.01', passing: true },
+  ]}
+  biasChecks={[
+    { group: 'Code-heavy docs', metric: 'Classification accuracy', value: '97.1%', acceptable: true },
+    { group: 'Prose-only docs', metric: 'Classification accuracy', value: '91.8%', acceptable: true },
+    { group: 'Mixed-language docs', metric: 'Classification accuracy', value: '89.4%', acceptable: true },
+    { group: 'Very short chunks (<20 words)', metric: 'Fallback rate', value: '18%', acceptable: false },
+  ]}
+  limitations={[
+    'Very short chunks (<20 words) have an 18% fallback rate — rule-based fallback activates, which may mis-classify edge cases.',
+    'Classification quality depends on Anthropic API availability. If API is down, all classification falls back to rule-based logic.',
+    'Zero-shot — no fine-tuning on internal doc corpus. Performance may degrade on highly domain-specific content (e.g. quantitative finance notation).',
+    'Model version pinned to claude-3-5-haiku. Upgrading model requires re-validation.',
+    'Not validated for use outside MDX document processing. Do not use for other classification tasks.',
+  ]}
+/>

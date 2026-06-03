@@ -1,0 +1,73 @@
+---
+id: incident-postmortem-inc-2026-0031
+title: "INC-2026-0031 Post-Mortem: Pipeline Server OOM Crash"
+sidebar_label: "🔥 Incident Post-Mortem"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { IncidentPostMortem } from '@site/src/components/PageLayouts/wave5';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="Priya Shah, James Liu" tags={['incident','post-mortem','pir','p2']} />
+
+<InfoPanel type="info" title="Blameless post-mortem — focus on systems, not individuals">
+  This PIR follows our blameless culture policy. The goal is to identify systemic improvements,
+  not assign fault. Action items are assigned by role availability, not by who caused the issue.
+</InfoPanel>
+
+<IncidentPostMortem
+  incidentId="INC-2026-0031"
+  title="Pipeline Server Out-of-Memory Crash — Concurrent Large Document Processing"
+  severity="P2"
+  status="published"
+  detectedAt="2026-05-28 09:14 BST"
+  resolvedAt="2026-05-28 10:47 BST"
+  duration="1h 33min"
+  affectedServices={['pipeline-server', 'docs-site (Generate Slides button)']}
+  customerImpact="Generate Slides button returned 503 for all users for 93 minutes during peak morning usage window. Estimated 28 users affected. No data loss. No downstream Slidev presentations corrupted."
+  summary="The pipeline server (2 replicas, 2GB RAM each) crashed with OOMKilled at 09:14 after 3 concurrent large document requests (avg 847KB MDX with 40+ embedded images) were submitted simultaneously. The ProseCondenser agent loads all image attachments into memory during Phase 2 without streaming. Kubernetes OOM-killed both pods. Auto-restart brought service back at 10:47 after manual replica scaling to 4."
+  rootCause="The ProseCondenser agent in agents/content.py uses io.BytesIO to buffer entire image attachments in memory before processing. For documents with many large images, memory usage scales with O(n_images × avg_image_size). Three concurrent requests with 40+ images each exhausted the 2GB pod limit. No memory limit guards or request queuing existed."
+  contributingFactors={[
+    'No per-request memory guard or concurrency limit on /generate endpoint',
+    'Kubernetes memory requests and limits were set identically (2Gi) — no headroom for spikes',
+    'Alerting threshold for memory was 90% — pod OOMKilled before alert fired',
+    'No circuit breaker pattern on the Generate Slides button (retried on error, amplifying load)',
+    'Load testing had only used documents < 200KB — large document behaviour untested',
+  ]}
+  timeline={[
+    { timestamp: '09:11', event: '3 concurrent /generate requests received for documents 780KB, 890KB, 870KB', type: 'detect' },
+    { timestamp: '09:12', event: 'Memory on pod-0 reaches 1.8GB — no alert fires (threshold 90% = 1.8GB)', type: 'detect' },
+    { timestamp: '09:14', event: 'Kubernetes OOM-kills pod-0. pod-1 simultaneously OOM-killed (same load). Service 503.', type: 'detect' },
+    { timestamp: '09:17', event: 'PagerDuty P2 alert fires — synthetic health check /health returns 503', actor: 'PagerDuty', type: 'escalate' },
+    { timestamp: '09:22', event: 'Priya Shah acknowledges alert, begins investigation', actor: 'Priya Shah', type: 'escalate' },
+    { timestamp: '09:35', event: 'Priya confirms OOMKilled events in kubectl describe pod — identifies root cause', actor: 'Priya Shah', type: 'mitigate' },
+    { timestamp: '09:38', event: 'Varun Pritham joins bridge call', actor: 'Varun Pritham', type: 'escalate' },
+    { timestamp: '09:45', event: 'Decision: scale replicas to 4 as interim mitigation, implement request queuing later', actor: 'Varun / Priya', type: 'mitigate' },
+    { timestamp: '09:52', event: 'kubectl scale deployment pipeline-server --replicas=4 executed', actor: 'Priya Shah', type: 'mitigate' },
+    { timestamp: '10:01', event: 'Pods back in Running state. /health returning 200. Limited traffic restored.', type: 'resolve' },
+    { timestamp: '10:15', event: 'Full traffic restored — Grafana error rate back to baseline < 0.1%', type: 'resolve' },
+    { timestamp: '10:47', event: 'Incident declared resolved. PIR scheduled for 2026-05-30.', actor: 'Varun Pritham', type: 'resolve' },
+  ]}
+  whatWentWell={[
+    'PagerDuty synthetic health check detected outage within 3 minutes of OOMKill',
+    'Runbook clearly documented kubectl scale command — responder did not need to search',
+    'Blameless culture meant root cause discussion was open and fast in bridge call',
+    'Replica scaling as interim mitigation was correct decision — bought time for proper fix',
+    'No data loss — pipeline is stateless and requests were cleanly dropped, not corrupted',
+  ]}
+  whatToImprove={[
+    'Memory alerting threshold must fire before OOMKill — 80% not 90%',
+    'No concurrency limit on /generate allowed unbounded simultaneous large-doc requests',
+    'Generate Slides button had no retry backoff — amplified load during partial recovery',
+    'Load testing never included documents > 200KB — large doc behaviour was unknown',
+    'Incident response runbook had no section for OOMKill — responder had to improvise diagnosis',
+  ]}
+  actionItems={[
+    { id: 'AI-001', title: 'Add memory alerting at 80% — update Grafana alert rule', owner: 'Priya Shah', dueDate: '2026-06-07', priority: 'p1', status: 'in-progress' },
+    { id: 'AI-002', title: 'Implement request concurrency limit (max 2 concurrent /generate) with 429 on overflow', owner: 'James Liu', dueDate: '2026-06-07', priority: 'p1', status: 'open' },
+    { id: 'AI-003', title: 'Stream image processing in ProseCondenser — do not buffer entire file in memory', owner: 'James Liu', dueDate: '2026-06-14', priority: 'p2', status: 'open' },
+    { id: 'AI-004', title: 'Add exponential backoff + jitter to Generate Slides button retry logic', owner: 'Varun Pritham', dueDate: '2026-06-10', priority: 'p2', status: 'open' },
+    { id: 'AI-005', title: 'Add OOMKill diagnosis section to pipeline-server runbook', owner: 'Priya Shah', dueDate: '2026-06-05', priority: 'p2', status: 'done' },
+    { id: 'AI-006', title: 'Load test with documents 500KB–2MB — add to CI pipeline as regression test', owner: 'James Liu', dueDate: '2026-06-21', priority: 'p3', status: 'open' },
+  ]}
+/>

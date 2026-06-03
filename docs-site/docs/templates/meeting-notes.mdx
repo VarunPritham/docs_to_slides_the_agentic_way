@@ -1,0 +1,73 @@
+---
+id: meeting-2026-06-01
+title: "Sprint Planning — Jun 1 2026"
+sidebar_label: "📅 Sprint Planning Jun 1"
+---
+
+import { MetaBlock, MeetingNotes, InfoPanel } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Varun Pritham"
+  team="AI Platform"
+  status="live"
+  lastUpdated="2026-06-01"
+  tags={['meeting', 'sprint', 'planning']}
+/>
+
+<MeetingNotes
+  date="Monday June 1, 2026 · 10:00–11:00 AM UTC"
+  facilitator="Varun Pritham"
+  attendees={['Varun Pritham', 'James Liu', 'Priya Shah', 'Aria Patel']}
+  actionItems={[
+    { owner: 'james',  task: 'Add parallelism to Phase 1 extraction agents using LangGraph Send API', due: 'Jun 8',  done: false },
+    { owner: 'priya',  task: 'Set up Algolia DocSearch for the internal Docusaurus deployment',       due: 'Jun 6',  done: true  },
+    { owner: 'aria',   task: 'Write runbook for Slidev port conflict edge case',                      due: 'Jun 5',  done: false },
+    { owner: 'varun',  task: 'Update ADR-001 with parallelism trade-off notes',                      due: 'Jun 10', done: false },
+  ]}
+>
+
+## Agenda
+
+1. Sprint 4 retro summary
+2. Sprint 5 scope
+3. Infra / on-call changes
+4. AOB
+
+---
+
+## Sprint 4 Retro Summary
+
+Overall velocity was **+12%** vs Sprint 3. The OpenAPI plugin integration took longer than
+expected due to a version conflict with `docusaurus-theme-openapi-docs@5.x` — added 2 days.
+
+Key wins:
+- Homepage redesign shipped and well-received internally
+- ADR process adopted by 3 other teams this sprint
+- Service dashboard component reused by the Data team
+
+---
+
+## Sprint 5 Scope
+
+**Must-have:**
+- Phase 1 parallelism (LangGraph `Send` API) — assigned James
+- Algolia search wired into the internal deployment — assigned Priya
+
+**Nice-to-have:**
+- Retro board component (already built, needs MDX example page)
+- Feedback widget on each doc page
+
+**Out of scope:**
+- Multi-tenant pipeline — deferred to Q3
+
+---
+
+## Infra / On-Call Changes
+
+Priya takes over on-call from James on **June 2** (Week 23). PagerDuty schedule updated.
+
+</MeetingNotes>
+
+<InfoPanel type="tip" title="Recording available">
+  Full meeting recording in Loom. DM @varun for access link.
+</InfoPanel>

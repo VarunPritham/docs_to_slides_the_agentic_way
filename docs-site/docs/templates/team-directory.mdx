@@ -1,0 +1,50 @@
+---
+id: team-directory
+title: Team Directory
+sidebar_label: "👥 Team Directory"
+---
+
+import { MetaBlock, TeamGrid, InfoPanel, OnCallRota } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Varun Pritham"
+  team="All Teams"
+  status="live"
+  lastUpdated="2026-06-01"
+  tags={['team', 'directory', 'people']}
+/>
+
+<InfoPanel type="tip" title="Green dot = currently on-call">
+  The green indicator on an avatar means that person is the primary on-call engineer this week.
+</InfoPanel>
+
+## AI Platform
+
+<TeamGrid
+  members={[
+    { name: 'Varun Pritham', role: 'Tech Lead', team: 'AI Platform', timezone: 'UTC+5:30', oncall: false, slack: 'varun', email: 'varun@company.com' },
+    { name: 'James Liu',     role: 'Senior Engineer', team: 'AI Platform', timezone: 'UTC-8', oncall: false, slack: 'james', email: 'james@company.com' },
+    { name: 'Aria Patel',    role: 'Engineer II', team: 'AI Platform', timezone: 'UTC+0', oncall: false, slack: 'aria', email: 'aria@company.com' },
+  ]}
+/>
+
+## Infrastructure / SRE
+
+<TeamGrid
+  members={[
+    { name: 'Priya Shah',   role: 'SRE Lead', team: 'Infrastructure', timezone: 'UTC+5:30', oncall: true, slack: 'priya', email: 'priya@company.com' },
+    { name: 'Marcus Reed',  role: 'Platform Engineer', team: 'Infrastructure', timezone: 'UTC-5', oncall: false, slack: 'marcus', email: 'marcus@company.com' },
+  ]}
+/>
+
+## On-Call Rotation
+
+<OnCallRota
+  escalation="@varun via PagerDuty (P1/P2 only)"
+  entries={[
+    { name: 'Priya Shah',   week: 'Week 22', start: 'May 26', end: 'Jun 01', primary: true },
+    { name: 'James Liu',    week: 'Week 23', start: 'Jun 02', end: 'Jun 08' },
+    { name: 'Aria Patel',   week: 'Week 24', start: 'Jun 09', end: 'Jun 15' },
+    { name: 'Marcus Reed',  week: 'Week 25', start: 'Jun 16', end: 'Jun 22' },
+  ]}
+/>

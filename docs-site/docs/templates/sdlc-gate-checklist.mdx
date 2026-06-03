@@ -1,0 +1,97 @@
+---
+id: sdlc-gate-checklist-pipeline-v1-4
+title: "SDLC Gate Checklist: pipeline-server v1.4.0"
+sidebar_label: "🚦 SDLC Gate Checklist"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { SDLCGateChecklist } from '@site/src/components/PageLayouts/wave5';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  reviewedBy="Priya Shah" tags={['sdlc','release','gate','promotion']} />
+
+<InfoPanel type="tip" title="Gate rules — each gate must be PASSED before promoting to the next environment">
+  Waived checks require Risk Owner sign-off and must be logged in the exceptions register.
+  All FAIL items are blockers — no promotion until resolved or formally waived.
+</InfoPanel>
+
+<SDLCGateChecklist
+  serviceId="SVC-001"
+  serviceName="pipeline-server"
+  version="v1.4.0"
+  releaseDate="2026-06-07"
+  releaseManager="Varun Pritham"
+  gates={[
+    {
+      id: 'dev-complete',
+      label: 'Development Complete',
+      status: 'passed',
+      approver: 'Varun Pritham',
+      approvedAt: '2026-06-03',
+      checks: [
+        { check: 'All acceptance criteria from user stories met', status: 'pass', evidence: 'Sprint-42 stories DEV-881, DEV-882, DEV-883 all marked Done' },
+        { check: 'Unit test coverage ≥ 80% for changed files', status: 'pass', evidence: 'Coverage: 84% (was 81%). Report in CI artefact #4421' },
+        { check: 'No unresolved TODO/FIXME comments in changed files', status: 'pass', evidence: 'grep clean — 0 results' },
+        { check: 'API contract changes are backward-compatible or versioned', status: 'pass', evidence: '/generate schema unchanged. /v2/generate added as new endpoint' },
+        { check: 'Feature flag configured for progressive rollout if applicable', status: 'na', evidence: 'Not applicable — no user-facing feature flag required for this change' },
+      ],
+    },
+    {
+      id: 'code-review',
+      label: 'Code Review',
+      status: 'passed',
+      approver: 'James Liu',
+      approvedAt: '2026-06-04',
+      checks: [
+        { check: 'Peer review approved by at least 2 engineers', status: 'pass', evidence: 'MR !287 — approved by James Liu and Sarah Chen' },
+        { check: 'Security review completed (SAST scan green)', status: 'pass', evidence: 'Semgrep scan: 0 critical, 0 high findings. Report in CI #4421' },
+        { check: 'No secrets or credentials in source code', status: 'pass', evidence: 'truffleHog scan clean' },
+        { check: 'Dependency vulnerabilities checked (pip audit)', status: 'pass', evidence: 'pip-audit: 0 known vulnerabilities in updated packages' },
+        { check: 'Docstrings updated for all changed public functions', status: 'pass', evidence: 'Reviewed in MR !287' },
+      ],
+    },
+    {
+      id: 'testing',
+      label: 'Testing',
+      status: 'passed',
+      approver: 'James Liu',
+      approvedAt: '2026-06-05',
+      checks: [
+        { check: 'Unit tests pass (pytest, 0 failures)', status: 'pass', evidence: '47/47 tests pass — CI pipeline #4421' },
+        { check: 'Integration tests pass (API contract tests)', status: 'pass', evidence: 'Postman collection v12 — all 18 scenarios passed' },
+        { check: 'E2E pipeline test: 5 sample MDX files generate correct Slidev output', status: 'pass', evidence: 'Slide count and layout match baseline. Output diffs reviewed by Varun.' },
+        { check: 'Performance test: p99 latency < 5s on reference doc (200KB)', status: 'pass', evidence: 'p99 = 3.8s. k6 report in CI #4421' },
+        { check: 'Large document load test (500KB–2MB docs, 3 concurrent)', status: 'fail',
+          blockerNote: 'AI-006 from INC-2026-0031 — test added but 2 of 3 large-doc scenarios fail with 429 (expected after AI-002 fix). Waiver requested from Varun.' },
+        { check: 'Regression test suite passes', status: 'pass', evidence: 'Full regression: 91/91 tests pass' },
+      ],
+    },
+    {
+      id: 'staging',
+      label: 'Staging Deployment',
+      status: 'in-progress',
+      checks: [
+        { check: 'Helm upgrade to staging succeeds with 0 errors', status: 'pass', evidence: 'Deployed 2026-06-05 18:00 — helm upgrade exit 0' },
+        { check: 'Smoke test: /health returns 200 with correct version field', status: 'pass', evidence: 'version: 1.4.0 confirmed' },
+        { check: 'Smoke test: POST /generate completes successfully on sample doc', status: 'pass', evidence: 'Response 200, slide_count: 12, slides_url returned' },
+        { check: 'Memory and CPU within expected limits for 30 min after deploy', status: 'pending', evidence: 'Monitoring window 2026-06-06 09:00–09:30' },
+        { check: 'No new error log entries in first 30 min (Grafana)', status: 'pending', evidence: 'Monitoring window 2026-06-06 09:00–09:30' },
+        { check: 'Change Request CR-2026-0142 CAB approved', status: 'pending', evidence: 'Pending Priya Shah and Sarah Chen approvals' },
+      ],
+    },
+    {
+      id: 'production',
+      label: 'Production Deployment',
+      status: 'not-started',
+      checks: [
+        { check: 'All staging gate checks PASSED or WAIVED', status: 'pending' },
+        { check: 'Deployment within approved maintenance window (06-07 22:00 – 06-08 02:00)', status: 'pending' },
+        { check: 'On-call engineer confirmed available during deploy window', status: 'pending' },
+        { check: 'Rollback procedure tested in staging and documented in CR', status: 'pass', evidence: 'Helm rollback tested 2026-06-05 — service recovered in 4m 12s' },
+        { check: '/health confirms version v1.4.0 within 10 min of deploy', status: 'pending' },
+        { check: 'Grafana error rate < 0.5% for 30 min post-deploy', status: 'pending' },
+        { check: 'Change record updated to IMPLEMENTED status in ServiceNow', status: 'pending' },
+      ],
+    },
+  ]}
+/>

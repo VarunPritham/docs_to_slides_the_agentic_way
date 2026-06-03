@@ -1,0 +1,41 @@
+---
+id: data-contract-pipeline-events
+title: "Data Contract: Pipeline Events"
+sidebar_label: "🤝 Data Contract"
+---
+
+import { MetaBlock } from '@site/src/components/PageLayouts';
+import { DataContract } from '@site/src/components/PageLayouts/wave3';
+
+<MetaBlock owner="James Liu" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  tags={['data-contract','events','pipeline','api']} />
+
+<DataContract
+  contractId="DC-001"
+  name="Pipeline Completion Event"
+  producer="Pipeline Server (server.py)"
+  consumers={['Docusaurus Frontend', 'Monitoring Service', 'Audit Logger']}
+  status="active"
+  version="1.0.0"
+  effectiveDate="2026-05-01"
+  reviewDate="2026-11-01"
+  sla={{ freshness: '< 10s after pipeline end', availability: '99.5%', latency: 'p99 < 500ms' }}
+  schema={[
+    { name: 'job_id',        type: 'string (UUID)',   required: true,  description: 'Unique identifier for the pipeline run.' },
+    { name: 'status',        type: 'enum',            required: true,  description: 'success | failed | partial' },
+    { name: 'slides_url',    type: 'string (URL)',    required: false, description: 'Live Slidev URL. Only present when status=success.' },
+    { name: 'slide_count',   type: 'integer',         required: false, description: 'Total slides generated. Present when status=success.' },
+    { name: 'output_path',   type: 'string',          required: false, description: 'Absolute path to generated slides.md.' },
+    { name: 'duration_ms',   type: 'integer',         required: true,  description: 'Total pipeline wall-clock time in milliseconds.' },
+    { name: 'completed_at',  type: 'timestamp (ISO)', required: true,  description: 'UTC timestamp of pipeline completion.' },
+    { name: 'error_message', type: 'string',          required: false, description: 'Human-readable error. Only present when status=failed.' },
+    { name: 'validation_errors', type: 'array<string>', required: true, description: 'Validation issues from ValidatorAgent. Empty = clean.' },
+  ]}
+  qualityRules={[
+    { check: 'job_id is valid UUID v4',            threshold: '100%',  action: 'Reject event — alert producer' },
+    { check: 'completed_at is valid ISO-8601 UTC', threshold: '100%',  action: 'Reject event — alert producer' },
+    { check: 'duration_ms > 0',                    threshold: '100%',  action: 'Reject event' },
+    { check: 'slides_url reachable (when present)', threshold: '95%',  action: 'Log warning — non-blocking' },
+  ]}
+  breakingChangePolicy="Additive changes (new optional fields) are non-breaking. Removing or renaming fields, or changing types, requires 4 weeks notice to all consumers and a major version bump. Breaking changes must be approved by all consumer team leads."
+/>

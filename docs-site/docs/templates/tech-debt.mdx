@@ -1,0 +1,61 @@
+---
+id: tech-debt-register
+title: Tech Debt Register
+sidebar_label: "🧱 Tech Debt Register"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { TechDebtRegister } from '@site/src/components/PageLayouts/wave2';
+
+<MetaBlock owner="Varun Pritham" team="AI Platform" status="live" lastUpdated="2026-06-01"
+  tags={['tech-debt','engineering','backlog']} />
+
+<InfoPanel type="warning" title="Triage weekly — Fridays 3pm">
+  Click any row to expand the full description. Filter by severity using the chips above the table.
+  All critical items must have a sprint target assigned.
+</InfoPanel>
+
+<TechDebtRegister items={[
+  {
+    id: 'TD-001', title: 'Synchronous pipeline blocks HTTP thread', system: 'Pipeline Server',
+    severity: 'critical', status: 'in-progress', owner: 'James Liu',
+    created: '2026-05-15', targetSprint: 'Sprint 5',
+    description: 'POST /generate hangs the HTTP connection for the full pipeline duration (~4-8s). Unsafe for retries and blocks client UI.',
+    impact: 'User-facing latency, no partial progress visibility, poor resilience.',
+  },
+  {
+    id: 'TD-002', title: 'No test coverage on LLM agent fallback paths', system: 'agents/content.py',
+    severity: 'high', status: 'open', owner: 'Aria Patel',
+    created: '2026-05-20', targetSprint: 'Sprint 6',
+    description: 'The mock fallback logic in ContentTypeClassifier and ProseCondenser has zero unit test coverage. Edge cases discovered only in production.',
+    impact: 'Silent mis-classification of doc chunks. Inconsistent slide quality.',
+  },
+  {
+    id: 'TD-003', title: 'graph.py has 17 hardcoded sequential edges', system: 'graph.py',
+    severity: 'high', status: 'open', owner: 'Varun Pritham',
+    created: '2026-04-10',
+    description: 'All 17 edges are added manually. Adding a new agent requires editing graph.py in two places. No auto-registration pattern.',
+    impact: 'Every new agent requires boilerplate. Potential for misconfigured edge order.',
+  },
+  {
+    id: 'TD-004', title: 'PipelineState TypedDict has no field-level validation', system: 'state.py',
+    severity: 'medium', status: 'open', owner: 'James Liu',
+    created: '2026-05-01',
+    description: 'State fields are plain TypedDict with no runtime validation. Agents can write malformed data without any error until downstream consumption.',
+    impact: 'Silent corruption of state. Hard-to-debug production failures.',
+  },
+  {
+    id: 'TD-005', title: 'Slidev port management uses kill -9 pattern', system: 'server.py',
+    severity: 'medium', status: 'accepted', owner: 'Priya Shah',
+    created: '2026-04-22',
+    description: 'server.py kills port 3030 with SIGKILL before every generate. Acceptable for single-user local use but not safe for concurrent requests.',
+    impact: 'Accepted risk for v1 local-only deployment. Must be addressed before multi-user.',
+  },
+  {
+    id: 'TD-006', title: 'CSS class names use Docusaurus internal suffixes', system: 'src/css/custom.css',
+    severity: 'low', status: 'open', owner: 'Aria Patel',
+    created: '2026-05-28',
+    description: 'Some CSS selectors reference Docusaurus internal class name hashes that may change between minor versions.',
+    impact: 'CSS breakage on Docusaurus upgrades. Low risk on current pinned version.',
+  },
+]} />

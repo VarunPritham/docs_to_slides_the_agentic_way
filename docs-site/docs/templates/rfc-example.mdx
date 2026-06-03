@@ -1,0 +1,70 @@
+---
+id: rfc-002-async-messaging
+title: "RFC-002: Async Messaging for Pipeline Events"
+sidebar_label: "📝 RFC-002 Async Messaging"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+import { RFC } from '@site/src/components/PageLayouts/wave2';
+
+<MetaBlock owner="James Liu" team="AI Platform" status="review" lastUpdated="2026-06-01"
+  reviewedBy="Varun Pritham" tags={['rfc','architecture','messaging','kafka']} />
+
+<RFC
+  rfcId="002"
+  title="Introduce async event messaging for pipeline stage completion"
+  author="James Liu"
+  date="2026-06-01"
+  status="open-for-comment"
+  reviewers={['Varun Pritham', 'Priya Shah', 'Aria Patel']}
+  deadline="2026-06-10"
+  problemStatement={
+    <>
+      The current pipeline runs 18 agents sequentially in a single synchronous LangGraph call.
+      When the pipeline is triggered via <code>POST /generate</code>, the HTTP request hangs
+      for the full duration (~4-8s). This blocks the client, prevents partial progress visibility,
+      and makes retries unsafe. As we add more doc types and longer phases, this will get worse.
+    </>
+  }
+  proposedSolution={
+    <>
+      Introduce an <strong>event-driven stage completion model</strong>. Each of the 4 pipeline
+      phases emits a completion event to a lightweight message bus (Redis Streams or Kafka topic).
+      The API returns a <code>job_id</code> immediately. Clients poll <code>GET /status/&#123;job_id&#125;</code>
+      or subscribe via SSE for real-time progress. Slidev is only launched after Phase 4 emits its event.
+    </>
+  }
+  alternatives={[
+    {
+      name: 'WebSockets',
+      description: 'Keep the HTTP connection open and stream progress events.',
+      tradeoff: 'More complex client handling. Requires sticky sessions or a connection broker in multi-instance deploy.',
+    },
+    {
+      name: 'Server-Sent Events (SSE)',
+      description: 'Unidirectional stream from server to client over HTTP.',
+      tradeoff: 'Simpler than WebSockets but requires a persistent connection. Easier to proxy.',
+    },
+    {
+      name: 'Polling only',
+      description: 'Client polls GET /status every 500ms.',
+      tradeoff: 'No infra changes but ~50% of poll requests will be wasted. Higher server load at scale.',
+    },
+  ]}
+  openQuestions={[
+    'Should we use Redis Streams (already in stack) or introduce Kafka? What is the ops overhead?',
+    'Do we need message persistence? If the server restarts mid-pipeline, should jobs resume?',
+    'What is the retention policy for completed job events?',
+    'Is SSE sufficient for the Docusaurus frontend, or do we need WebSocket bidirectionality?',
+  ]}
+  sections={[
+    {
+      title: 'Security & Compliance Considerations',
+      content: 'Job IDs must be unguessable (UUID v4). Events must not contain PII from the source doc. Message bus access must be restricted to internal services only — no public exposure.',
+    },
+    {
+      title: 'Rollout Plan',
+      content: 'Phase 1: Add job_id to existing synchronous response (no breaking change). Phase 2: Add GET /status endpoint with polling. Phase 3: Add SSE endpoint. Phase 4: Make async the default, deprecate sync mode.',
+    },
+  ]}
+/>

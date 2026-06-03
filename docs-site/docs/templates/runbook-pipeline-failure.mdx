@@ -1,0 +1,217 @@
+---
+id: runbook-pipeline-failure
+title: "Runbook: Pipeline Failure"
+sidebar_label: "🔥 Runbook: Pipeline Failure"
+---
+
+import { MetaBlock, RunbookStep, InfoPanel, ApiTryIt } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="Platform Team"
+  team="SRE"
+  status="live"
+  lastUpdated="2026-06-02"
+  reviewedBy="Priya Shah"
+  tags={['runbook', 'incident', 'pipeline', 'sre', 'p1']}
+/>
+
+<InfoPanel type="danger" title="Severity: P1 — Follow steps in order. Do NOT skip.">
+  This runbook covers complete pipeline failures where <code>POST /generate</code> returns
+  5xx errors or hangs indefinitely. Work through every step in sequence before escalating.
+  Each step is self-contained — run the command, check the expected output, then proceed.
+</InfoPanel>
+
+---
+
+## Pre-flight Checks
+
+<RunbookStep step={1} title="Verify the FastAPI server is responding" severity="critical"
+  command="curl -s http://localhost:8000/health | jq .">
+
+**Expected output:**
+```json
+{ "status": "ok", "slidev_running": true }
+```
+
+If you get `Connection refused` → the server is down, go to **Step 2**.
+If you get a JSON body but `slidev_running: false` → Slidev process died, go to **Step 6**.
+
+</RunbookStep>
+
+<RunbookStep step={2} title="Check for zombie processes holding port 8000" severity="high"
+  command="lsof -i :8000 | grep LISTEN">
+
+If you see a PID in the output, a stale process is blocking the port. Kill it:
+
+```bash
+kill -9 <PID>
+```
+
+Then restart the server (Step 3). If `lsof` returns empty, the server simply never started — proceed to Step 3.
+
+</RunbookStep>
+
+<RunbookStep step={3} title="Restart the pipeline server" severity="high"
+  command="cd /path/to/docusaurus-to-slidev && python server.py &">
+
+Wait **5 seconds**, then hit `/health` again:
+
+```bash
+curl -s http://localhost:8000/health | jq .
+```
+
+If it still returns `Connection refused`, check environment variables (**Step 4**).
+If it returns 200 OK, proceed to **Step 5** to test a live generate.
+
+</RunbookStep>
+
+<RunbookStep step={4} title="Verify environment variables are set" severity="high"
+  command="echo $ANTHROPIC_API_KEY | cut -c1-12">
+
+You should see `sk-ant-api03`. If blank, re-export and restart:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-api03-...
+python server.py &
+```
+
+**For Databricks providers — also check:**
+```bash
+echo $DATABRICKS_HOST
+echo $DATABRICKS_TOKEN | cut -c1-8
+echo $DATABRICKS_ENDPOINT
+```
+
+All three must be non-empty if `LLM_PROVIDER=databricks`.
+
+</RunbookStep>
+
+<InfoPanel type="note" title="LLM Provider mock mode">
+  If <code>ANTHROPIC_API_KEY</code> is missing, the pipeline falls back to <strong>mock mode</strong>
+  (no real LLM calls). Mock mode will not error — but slides will contain placeholder text.
+  Check <code>pipeline.log</code> for the line <code>LLM mode: mock</code> to confirm.
+</InfoPanel>
+
+---
+
+## Live Request Test
+
+<RunbookStep step={5} title="Fire a minimal generate request" severity="medium">
+
+Use the tester below to confirm the pipeline accepts requests end-to-end:
+
+</RunbookStep>
+
+<ApiTryIt
+  method="POST"
+  url="http://localhost:8000/generate"
+  description="Test pipeline — generates slides for the intro doc"
+  body={{ url_path: '/docs/intro' }}
+/>
+
+<InfoPanel type="tip" title="What a healthy response looks like">
+  Status <code>200</code> with a body containing <code>slides_url</code>, <code>slide_count</code>,
+  and <code>generation_time_ms</code>. Anything else — capture the body and attach it to your
+  incident ticket.
+</InfoPanel>
+
+---
+
+## Slidev Process Issues
+
+<RunbookStep step={6} title="Check for port conflict on :3030" severity="medium"
+  command="lsof -i :3030">
+
+If another process owns `:3030`, the pipeline generates the slide file but silently fails to launch Slidev. Kill the offender:
+
+```bash
+kill -9 <PID>
+```
+
+Then trigger another generate request. The server auto-restarts Slidev on each successful pipeline run.
+
+</RunbookStep>
+
+<RunbookStep step={7} title="Manually start Slidev to isolate the failure" severity="medium"
+  command="cd output/slides && npx slidev slides.md --port 3030 --open">
+
+If Slidev fails to start here with an error, the issue is in the generated `slides.md` file — likely malformed frontmatter or a broken Mermaid block. Inspect the file:
+
+```bash
+head -30 output/slides/slides.md
+```
+
+Look for:
+- Missing closing `---` on frontmatter
+- Leftover JSX tags like `<ComponentName>`
+- Unclosed fenced code blocks ` ``` `
+
+</RunbookStep>
+
+---
+
+## Log Inspection
+
+<RunbookStep step={8} title="Pull the last 100 lines from the pipeline log" severity="low"
+  command="tail -100 pipeline.log | grep -E 'ERROR|WARN|Exception'">
+
+Common errors and what they mean:
+
+| Log snippet | Root cause | Fix |
+|---|---|---|
+| `anthropic.AuthenticationError` | API key invalid or expired | Rotate key, re-export |
+| `FileNotFoundError: slides.md` | `output/slides/` dir missing | `mkdir -p output/slides` |
+| `Port 3030 already in use` | Stale Slidev process | `kill $(lsof -ti:3030)` |
+| `JSONDecodeError` in response | LangGraph state corruption | Restart server; check Python ≥3.11 |
+| `LLM timeout after 30s` | Anthropic API slow | Retry; check `status.anthropic.com` |
+
+</RunbookStep>
+
+<RunbookStep step={9} title="Check the Docusaurus dev server is accessible" severity="low"
+  command="curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/">
+
+Must return `200`. If not, the Docusaurus server is down — restart it:
+
+```bash
+cd docs-site && npm start
+```
+
+This does not affect the pipeline itself but breaks the Generate Slides button UI.
+
+</RunbookStep>
+
+---
+
+## Escalation
+
+<InfoPanel type="warning" title="Escalate if all 9 steps pass but failure persists">
+
+Collect the following before paging the on-call engineer:
+
+1. **Error output:** `tail -100 pipeline.log`
+2. **Health check:** `curl http://localhost:8000/health`
+3. **The failing `url_path`** that triggered the 5xx
+4. **Python version:** `python --version`
+5. **Node version:** `node --version`
+
+Post in **#platform-oncall** with subject: `[P1] POST /generate returning 5xx — runbook exhausted`.
+
+</InfoPanel>
+
+| Escalation tier | Contact | When |
+|---|---|---|
+| L1 On-call | `#platform-oncall` Slack | Steps 1–5 failed |
+| L2 Platform Lead | Page via PagerDuty | Steps 6–9 also failed |
+| L3 Vendor (Anthropic) | `support.anthropic.com` | API-level errors confirmed |
+
+---
+
+## Post-Resolution Checklist
+
+Once the pipeline is healthy again:
+
+- [ ] Confirm `/health` returns `{"status":"ok","slidev_running":true}`
+- [ ] Trigger a generate on `/docs/intro` and verify deck opens on `:3030`
+- [ ] Document the root cause in `#platform-incidents`
+- [ ] Add new failure modes to the log table in Step 8 if not already there
+- [ ] File a follow-up ticket if a permanent fix is needed

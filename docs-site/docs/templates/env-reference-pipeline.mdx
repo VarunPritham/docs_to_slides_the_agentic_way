@@ -1,0 +1,117 @@
+---
+id: env-reference-pipeline
+sidebar_label: "⚙️ Env Reference"
+title: "Environment Reference — pipeline-server"
+---
+
+import { EnvironmentReference } from '@site/src/components/PageLayouts/wave6';
+
+<EnvironmentReference
+  service="pipeline-server"
+  configFile=".env.example"
+  variables={[
+    {
+      name: "ANTHROPIC_API_KEY",
+      required: true,
+      type: "string",
+      example: "sk-ant-api03-xxxxxxxxxxxx",
+      description: "Anthropic API key for Claude LLM calls. Required when LLM_PROVIDER=anthropic.",
+      service: "Anthropic",
+      secret: true
+    },
+    {
+      name: "LLM_PROVIDER",
+      required: false,
+      type: "enum",
+      default: "anthropic",
+      example: "anthropic",
+      description: "Which LLM backend to use. Use 'databricks' to route LLM calls through your Databricks workspace.",
+      enumValues: ["anthropic", "databricks"]
+    },
+    {
+      name: "DATABRICKS_ENDPOINT",
+      required: false,
+      type: "string",
+      default: "databricks-meta-llama-3-1-70b-instruct",
+      example: "databricks-meta-llama-3-1-70b-instruct",
+      description: "Databricks model serving endpoint name. Only used when LLM_PROVIDER=databricks.",
+      service: "Databricks"
+    },
+    {
+      name: "DATABRICKS_TOKEN",
+      required: false,
+      type: "string",
+      example: "dapi_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      description: "Databricks personal access token for authenticating model serving API calls.",
+      service: "Databricks",
+      secret: true
+    },
+    {
+      name: "DATABRICKS_HOST",
+      required: false,
+      type: "url",
+      example: "https://adb-1234567890.12.azuredatabricks.net",
+      description: "Databricks workspace URL. Required when LLM_PROVIDER=databricks.",
+      service: "Databricks"
+    },
+    {
+      name: "SERVER_PORT",
+      required: false,
+      type: "number",
+      default: "8000",
+      example: "8000",
+      description: "Port for the FastAPI pipeline server. Must not conflict with Docusaurus (3000) or Slidev (3030)."
+    },
+    {
+      name: "LOG_LEVEL",
+      required: false,
+      type: "enum",
+      default: "INFO",
+      example: "DEBUG",
+      description: "Logging verbosity. Use DEBUG to see per-agent state diffs during pipeline execution.",
+      enumValues: ["DEBUG", "INFO", "WARNING", "ERROR"]
+    },
+    {
+      name: "OUTPUT_DIR",
+      required: false,
+      type: "string",
+      default: "output/slides",
+      example: "output/slides",
+      description: "Directory where the pipeline writes generated Slidev .md files and copies image assets."
+    },
+    {
+      name: "MAX_CONCURRENT_REQUESTS",
+      required: false,
+      type: "number",
+      default: "2",
+      example: "2",
+      description: "Maximum number of /generate requests to process concurrently. Each pipeline run uses ~1 CPU core during LLM calls."
+    },
+    {
+      name: "ENABLE_LANGSMITH",
+      required: false,
+      type: "boolean",
+      default: "false",
+      example: "true",
+      description: "Enable LangSmith tracing for pipeline runs. Requires LANGSMITH_API_KEY to be set."
+    },
+    {
+      name: "LANGSMITH_API_KEY",
+      required: false,
+      type: "string",
+      example: "lsv2_pt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      description: "LangSmith API key for pipeline run tracing. Only used when ENABLE_LANGSMITH=true.",
+      service: "LangSmith",
+      secret: true
+    },
+    {
+      name: "LANGSMITH_PROJECT",
+      required: false,
+      type: "string",
+      default: "docslide-ai",
+      example: "docslide-ai-prod",
+      description: "LangSmith project name for grouping traces. Traces appear under this project in the LangSmith UI.",
+      service: "LangSmith"
+    }
+  ]}
+/>

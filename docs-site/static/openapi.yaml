@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: DocSlide AI — Pipeline API
+  description: |
+    FastAPI bridge that triggers the 18-agent LangGraph pipeline.
+    POST a doc path, get back a live Slidev URL.
+  version: 1.0.0
+  contact:
+    name: DocSlide AI
+    url: http://localhost:3000
+
+servers:
+  - url: http://localhost:8000
+    description: Local pipeline server
+
+tags:
+  - name: Pipeline
+    description: Trigger and monitor the slide-generation pipeline
+  - name: Health
+    description: Server status endpoints
+
+paths:
+  /generate:
+    post:
+      operationId: generateSlides
+      summary: Generate a Slidev presentation from a doc page
+      description: |
+        Accepts a Docusaurus doc URL path, resolves it to the corresponding `.mdx` file,
+        runs the full 4-phase 18-agent LangGraph pipeline, and returns a live Slidev URL.
+
+        The Slidev server is restarted on each call — the latest deck is always at `http://localhost:3030`.
+      tags: [Pipeline]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+            examples:
+              agent-router:
+                summary: Generate slides for the Agent Router doc
+                value:
+                  url_path: /docs/agent-router
+              intro:
+                summary: Generate slides for the Intro doc
+                value:
+                  url_path: /docs/intro
+      responses:
+        '200':
+          description: Slides generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateResponse'
+              example:
+                slides_url: http://localhost:3030
+                slide_count: 12
+                output_path: output/slides/agent-router.md
+                estimated_minutes: 8
+                validation_errors: []
+        '404':
+          description: MDX source file not found for the given path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error — url_path missing or malformed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Pipeline error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Server health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  slidev_running:
+                    type: boolean
+                    example: true
+
+  /status:
+    get:
+      operationId: pipelineStatus
+      summary: Last pipeline run status
+      description: Returns metadata from the most recent pipeline invocation.
+      tags: [Pipeline]
+      responses:
+        '200':
+          description: Status of last run
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+components:
+  schemas:
+    GenerateRequest:
+      type: object
+      required: [url_path]
+      properties:
+        url_path:
+          type: string
+          description: Docusaurus URL path (e.g. /docs/agent-router)
+          example: /docs/agent-router
+
+    GenerateResponse:
+      type: object
+      properties:
+        slides_url:
+          type: string
+          description: Live Slidev URL — opens automatically in the browser
+          example: http://localhost:3030
+        slide_count:
+          type: integer
+          description: Total number of slides generated
+          example: 12
+        output_path:
+          type: string
+          description: Path to the generated slides.md file
+          example: output/slides/agent-router.md
+        estimated_minutes:
+          type: integer
+          description: Estimated presentation duration in minutes
+          example: 8
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: List of validation issues (empty = all clear)
+
+    StatusResponse:
+      type: object
+      properties:
+        last_run_at:
+          type: string
+          format: date-time
+        source_path:
+          type: string
+        slide_count:
+          type: integer
+        success:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message

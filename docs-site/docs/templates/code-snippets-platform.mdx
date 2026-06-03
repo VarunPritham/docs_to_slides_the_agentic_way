@@ -1,0 +1,285 @@
+---
+id: code-snippets-platform
+sidebar_label: "📎 Code Snippets"
+title: "Code Snippets — AI Platform Patterns"
+---
+
+import { CodeSnippetLibrary } from '@site/src/components/PageLayouts/wave6';
+
+<CodeSnippetLibrary
+  snippets={[
+    {
+      id: "langgraph-node",
+      title: "LangGraph StateGraph Node",
+      description: "Standard pattern for a LangGraph agent node that reads from state and returns a partial update.",
+      language: "python",
+      tags: ["langgraph", "agents", "pattern"],
+      whenToUse: "Use this pattern for every agent function in the pipeline. The function must accept the full state TypedDict and return only the fields it writes — LangGraph merges the returned dict into the full state.",
+      code: `from state import PipelineState
+
+def my_agent(state: PipelineState) -> dict:
+    """Phase X — Agent N: Brief description of responsibility."""
+    # Read inputs from state
+    input_data = state["some_field"]
+
+    # Do the work
+    result = process(input_data)
+
+    # Return ONLY the fields this agent writes
+    return {"output_field": result}`,
+      author: "varun.pritham",
+      addedDate: "2026-04-01"
+    },
+    {
+      id: "pydantic-v2-model",
+      title: "Pydantic v2 Model",
+      description: "Pydantic v2 model with field validation, aliases, and model_config.",
+      language: "python",
+      tags: ["pydantic", "validation"],
+      whenToUse: "Use for FastAPI request/response bodies and any data that enters from external sources (API calls, file reads). Pydantic v2 is ~10x faster than v1 for validation-heavy pipelines.",
+      code: `from pydantic import BaseModel, Field, field_validator
+from typing import Optional
+
+class GenerateRequest(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    url_path: str = Field(
+        ...,
+        description="Docusaurus doc URL path, e.g. /docs/templates/my-page",
+        examples=["/docs/templates/my-page"]
+    )
+    output_dir: Optional[str] = Field(
+        default="output/slides",
+        description="Override the default output directory"
+    )
+
+    @field_validator("url_path")
+    @classmethod
+    def must_start_with_slash(cls, v: str) -> str:
+        if not v.startswith("/"):
+            raise ValueError("url_path must start with /")
+        return v`,
+      author: "priya.shah",
+      addedDate: "2026-03-15"
+    },
+    {
+      id: "fastapi-async-endpoint",
+      title: "FastAPI Async Endpoint with Error Handling",
+      description: "Async FastAPI route with structured error handling, logging, and HTTPException.",
+      language: "python",
+      tags: ["fastapi", "api"],
+      whenToUse: "Use this pattern for every POST/GET endpoint in server.py. The try/except ensures unhandled pipeline errors surface as 500s with a useful message rather than crashing the server.",
+      code: `import logging
+from fastapi import HTTPException
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+@app.post("/generate", response_model=GenerateResponse)
+async def generate_slides(req: GenerateRequest):
+    logger.info("generate_slides called: url_path=%s", req.url_path)
+
+    mdx_path = url_path_to_file(req.url_path)
+    if not os.path.exists(mdx_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"MDX file not found: {mdx_path}"
+        )
+
+    try:
+        graph = build_graph().compile()
+        result = graph.invoke({
+            "source_path": mdx_path,
+            "output_dir":  req.output_dir,
+        })
+    except Exception as exc:
+        logger.exception("Pipeline failed for %s", mdx_path)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return GenerateResponse(
+        slides_url="http://localhost:3030",
+        slide_count=len(result.get("slides", [])),
+        errors=result.get("validation_errors", []),
+    )`,
+      author: "varun.pritham",
+      addedDate: "2026-04-10"
+    },
+    {
+      id: "langchain-llm-fallback",
+      title: "LangChain LLM Call with Fallback",
+      description: "Pattern for making an LLM call with graceful fallback to a deterministic function when the LLM is unavailable.",
+      language: "python",
+      tags: ["llm", "anthropic", "error-handling"],
+      whenToUse: "Use in any of the 4 LLM agents (content_type_classifier, prose_condenser, speaker_notes_writer, summary_slide_agent). The fallback ensures the pipeline can run in CI or offline environments without API keys.",
+      code: `from llm import get_llm
+
+def _fallback_classify(chunk: dict) -> str:
+    """Rule-based fallback when LLM is unavailable."""
+    if chunk.get("code_blocks"):
+        return "code"
+    return "prose"
+
+def classify_with_fallback(chunk: dict) -> str:
+    prompt = (
+        f"Classify as one of: prose, code, image, table, list, heading_only\\n"
+        f"Heading: {chunk['heading']}\\n"
+        f"Body: {chunk['body'][:300]}\\n"
+        f"Reply with just the type."
+    )
+    try:
+        llm = get_llm()
+        result = llm.invoke(prompt).content.strip().lower()
+        valid = {"prose", "code", "image", "table", "list", "heading_only"}
+        return result if result in valid else _fallback_classify(chunk)
+    except Exception:
+        return _fallback_classify(chunk)`,
+      author: "james.liu",
+      addedDate: "2026-04-05"
+    },
+    {
+      id: "typed-dict-state",
+      title: "TypedDict Blackboard State",
+      description: "How to define a LangGraph state TypedDict with annotated reducer fields for list merging.",
+      language: "python",
+      tags: ["langgraph", "state", "pattern"],
+      whenToUse: "Use the Annotated[list, operator.add] pattern for any list field that multiple agents append to (e.g. validation_errors). Use plain types for fields written by a single agent.",
+      code: `from typing import TypedDict, Annotated, Optional
+import operator
+
+class PipelineState(TypedDict):
+    # ── Single-writer fields (plain types) ─────────────
+    source_path:       str
+    raw_content:       str
+    cleaned_content:   str
+    chunks:            list
+    slides:            list
+    output_path:       str
+
+    # ── Multi-writer list (reducer: append) ─────────────
+    # Multiple agents can append errors — LangGraph merges them
+    validation_errors: Annotated[list, operator.add]
+
+    # ── Optional fields ──────────────────────────────────
+    pacing_report:     Optional[dict]
+    summary_slide:     Optional[str]`,
+      author: "varun.pritham",
+      addedDate: "2026-05-01"
+    },
+    {
+      id: "react-css-module",
+      title: "React CSS Module Component",
+      description: "Docusaurus-compatible React component using CSS Modules and TypeScript props interface.",
+      language: "typescript",
+      tags: ["react", "docusaurus", "frontend"],
+      whenToUse: "Use this pattern for all custom Docusaurus React components. CSS Modules scope class names to the component file, preventing collisions across the site. Always import styles from the nearest .module.css file.",
+      code: `import React, { useState } from 'react';
+import styles from './wave-styles.module.css';
+
+interface MyComponentProps {
+  title: string;
+  items: Array<{ id: string; label: string; value: string }>;
+}
+
+export function MyComponent({ title, items }: MyComponentProps) {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  return (
+    <div className={styles.myContainer}>
+      <h2 className={styles.myTitle}>{title}</h2>
+      {items.map(item => (
+        <div
+          key={item.id}
+          className={\`\${styles.myItem} \${selected === item.id ? styles.myItemActive : ''}\`}
+          onClick={() => setSelected(item.id)}
+        >
+          <span className={styles.myLabel}>{item.label}</span>
+          <span className={styles.myValue}>{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}`,
+      author: "varun.pritham",
+      addedDate: "2026-03-01"
+    },
+    {
+      id: "mdx-metablock",
+      title: "Docusaurus MDX Page with MetaBlock",
+      description: "Standard MDX template for a new doc page using the MetaBlock component from the Wave 1 component library.",
+      language: "mdx",
+      tags: ["docusaurus", "template"],
+      whenToUse: "Use as the starting point for any new knowledge hub page. The MetaBlock gives every page consistent ownership, status, and review metadata. Replace the placeholder values and add content sections below.",
+      code: `---
+id: my-new-page
+sidebar_label: "My Page"
+title: "My Page Title"
+---
+
+import { MetaBlock, InfoPanel } from '@site/src/components/PageLayouts';
+
+<MetaBlock
+  owner="your.name"
+  reviewedBy={["reviewer.one", "reviewer.two"]}
+  lastUpdated="2026-06-01"
+  status="draft"
+  tags={["tag1", "tag2"]}
+/>
+
+## Overview
+
+<InfoPanel type="info" title="What is this page?">
+  Brief description of what this page covers and who should read it.
+</InfoPanel>
+
+## Section 1
+
+Content goes here.`,
+      author: "priya.shah",
+      addedDate: "2026-03-10"
+    },
+    {
+      id: "pytest-pipeline-fixture",
+      title: "pytest Fixture for PipelineState",
+      description: "Reusable pytest fixtures for unit-testing individual pipeline agents without running the full LangGraph graph.",
+      language: "python",
+      tags: ["testing", "pytest"],
+      whenToUse: "Use these fixtures in any test that targets a single agent function. The minimal_state fixture provides the minimum required fields; extend it per-test with the specific fields your agent reads.",
+      code: `import pytest
+from state import PipelineState
+
+@pytest.fixture
+def minimal_state() -> PipelineState:
+    """Minimum valid PipelineState for agent unit tests."""
+    return PipelineState(
+        source_path="sample.mdx",
+        output_dir="output/slides",
+        raw_content="",
+        cleaned_content="",
+        base_directory="/tmp",
+        file_metadata={},
+        headings=[],
+        code_blocks=[],
+        attachments=[],
+        chunks=[],
+        slides=[],
+        pacing_report={},
+        frontmatter="",
+        summary_slide="",
+        output_path="",
+        validation_errors=[],
+    )
+
+@pytest.fixture
+def state_with_chunks(minimal_state):
+    """State pre-populated with typed chunks for design-phase tests."""
+    minimal_state["chunks"] = [
+        {"chunk_id": "c1", "heading": "Overview", "heading_level": 2,
+         "body": "Short body.", "code_blocks": [], "attachments": [],
+         "word_count": 2, "chunk_type": "prose"},
+    ]
+    return minimal_state`,
+      author: "james.liu",
+      addedDate: "2026-04-20"
+    }
+  ]}
+/>

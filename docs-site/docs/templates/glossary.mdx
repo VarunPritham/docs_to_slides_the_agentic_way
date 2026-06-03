@@ -1,0 +1,77 @@
+---
+id: glossary
+title: Glossary & Acronyms
+sidebar_label: "📚 Glossary"
+---
+
+import { MetaBlock } from '@site/src/components/PageLayouts';
+import { GlossaryPage } from '@site/src/components/PageLayouts/wave4';
+
+<MetaBlock owner="Varun Pritham" team="All Teams" status="live" lastUpdated="2026-06-01"
+  tags={['glossary','acronyms','knowledge']} />
+
+<GlossaryPage
+  domains={['Engineering', 'AI/ML', 'Banking', 'Risk & Compliance', 'Delivery']}
+  terms={[
+    { term: 'ADR', expansion: 'Architecture Decision Record', domain: 'Engineering',
+      definition: 'A document that captures an important architectural decision made along with its context and consequences. ADRs are immutable once accepted.',
+      seeAlso: ['RFC', 'Design Doc'] },
+    { term: 'Agent Router', domain: 'AI/ML',
+      definition: 'An agentic pattern where an LLM extracts a structured intent from a natural language query, and a capability graph maps that intent to the correct downstream agent. The LLM never names an agent directly.',
+      seeAlso: ['Blackboard', 'Tool Routing'] },
+    { term: 'Blackboard', domain: 'AI/ML',
+      definition: 'A shared state object (PipelineState TypedDict) that all agents read from and write to. Agents do not call each other — they only interact through the blackboard.',
+      seeAlso: ['PipelineState', 'Agent Router'] },
+    { term: 'BCBS 239', expansion: 'Basel Committee on Banking Supervision Principles 239', domain: 'Risk & Compliance',
+      definition: 'Regulatory standard requiring banks to have accurate, timely risk data aggregation and reporting capabilities. Drives data dictionary and data lineage requirements.' },
+    { term: 'CAB', expansion: 'Change Advisory Board', domain: 'Risk & Compliance',
+      definition: 'A group that reviews and approves significant changes to production systems before deployment. Required for Tier 1 and Tier 2 changes at most banks.' },
+    { term: 'CET1', expansion: 'Common Equity Tier 1', domain: 'Banking',
+      definition: 'A capital adequacy measure. Core capital held by a bank as a buffer against losses. Minimum regulatory ratio is 4.5% under Basel III.' },
+    { term: 'DORA', expansion: 'DevOps Research and Assessment', domain: 'Engineering',
+      definition: 'A research programme that identified four key metrics for software delivery performance: Deployment Frequency, Lead Time for Changes, MTTR, and Change Failure Rate.',
+      seeAlso: ['MTTR', 'CFR'] },
+    { term: 'DORA (regulation)', expansion: 'Digital Operational Resilience Act', domain: 'Risk & Compliance',
+      definition: 'EU regulation effective Jan 2025 requiring financial entities to test and document ICT resilience, incident reporting, and third-party risk management.' },
+    { term: 'Error Budget', domain: 'Engineering',
+      definition: 'The maximum amount of downtime or errors permitted within an SLO measurement window. If the budget is exhausted, feature deployments are frozen until the budget recovers.',
+      seeAlso: ['SLO', 'SLI'] },
+    { term: 'LangGraph', domain: 'AI/ML',
+      definition: 'An orchestration library for building stateful, multi-actor applications with LLMs. Uses a StateGraph with nodes (agents) and edges to define a directed graph of computation.',
+      seeAlso: ['PipelineState', 'Agent Router'] },
+    { term: 'MiFID II', expansion: 'Markets in Financial Instruments Directive II', domain: 'Banking',
+      definition: 'EU regulation governing investment services and markets. Requires transaction reporting, pre/post-trade transparency, and best execution policies.' },
+    { term: 'MRM', expansion: 'Model Risk Management', domain: 'Risk & Compliance',
+      definition: 'The discipline of identifying, measuring, and managing risks arising from the use of quantitative models. Governed by SR 11-7 in the US and PRA SS1/23 in the UK.',
+      seeAlso: ['SR 11-7', 'ML Model Card'] },
+    { term: 'MTTR', expansion: 'Mean Time to Recovery', domain: 'Engineering',
+      definition: 'Average time from a production incident being detected to service being fully restored. A DORA metric. Elite performers achieve < 1 hour.',
+      seeAlso: ['DORA', 'SLO'] },
+    { term: 'NII', expansion: 'Net Interest Income', domain: 'Banking',
+      definition: 'The difference between interest earned on assets (loans) and interest paid on liabilities (deposits). Core revenue metric for retail and commercial banks.' },
+    { term: 'PipelineState', domain: 'AI/ML',
+      definition: 'The TypedDict shared blackboard object in the DocSlide AI pipeline. Contains all state produced by the 18 agents across 4 phases. See the Data Dictionary for full field definitions.',
+      seeAlso: ['Blackboard', 'Data Dictionary'] },
+    { term: 'PnL', expansion: 'Profit and Loss', domain: 'Banking',
+      definition: 'Financial statement summarising revenues, costs, and expenses. In trading, PnL tracks the gain or loss of a trading position over a period.' },
+    { term: 'RFC', expansion: 'Request for Comments', domain: 'Engineering',
+      definition: 'A document proposing a significant technical change, open for team comment before a decision is made. More lightweight than a full design doc. See RFC-002 for an example.',
+      seeAlso: ['ADR', 'Design Doc'] },
+    { term: 'RWA', expansion: 'Risk-Weighted Assets', domain: 'Banking',
+      definition: 'A bank\'s assets weighted by credit risk. Used to calculate capital adequacy ratios. Higher-risk assets require more capital to be held.' },
+    { term: 'SLI', expansion: 'Service Level Indicator', domain: 'Engineering',
+      definition: 'A quantitative measure of a service\'s behaviour. Examples: request success rate, p99 latency, availability. SLIs are the inputs to SLOs.',
+      seeAlso: ['SLO', 'Error Budget'] },
+    { term: 'SLO', expansion: 'Service Level Objective', domain: 'Engineering',
+      definition: 'A target value for an SLI over a time window. E.g. "99.5% of requests succeed over a rolling 30-day window." Breach of SLO triggers error budget policy.',
+      seeAlso: ['SLI', 'Error Budget'] },
+    { term: 'SOX', expansion: 'Sarbanes-Oxley Act', domain: 'Risk & Compliance',
+      definition: 'US federal law requiring accurate financial record keeping and internal controls for publicly listed companies. IT General Controls (ITGCs) are assessed annually.' },
+    { term: 'SR 11-7', domain: 'Risk & Compliance',
+      definition: 'Federal Reserve supervisory guidance on model risk management. Requires model documentation, validation, ongoing monitoring, and governance for all models used in decision-making.',
+      seeAlso: ['MRM', 'ML Model Card'] },
+    { term: 'Tool Routing', domain: 'AI/ML',
+      definition: 'An agentic pattern where each agent imports only its own scoped set of tool functions. Prevents agents from accidentally calling tools outside their responsibility.',
+      seeAlso: ['Agent Router', 'Blackboard'] },
+  ]}
+/>

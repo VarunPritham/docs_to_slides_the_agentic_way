@@ -1,0 +1,344 @@
+---
+id: layouts-guide
+title: Page Layouts — Complete Reference
+sidebar_label: "🗺️ Layouts Guide"
+sidebar_position: 3
+---
+
+import { InfoPanel } from '@site/src/components/PageLayouts';
+
+<InfoPanel type="tip" title="How to read this guide">
+  Each layout has a **When to use** rule (the trigger condition), a **Why** (the benefit), and a
+  **Don't use when** anti-pattern. Pick the layout that matches your page's primary purpose — not
+  its content. A page about an incident is a Post-Mortem even if it has tables and bullet lists.
+</InfoPanel>
+
+---
+
+## How layouts are organised
+
+All 20 layouts span five waves, each addressing a different knowledge domain for a tech team.
+
+| Wave | Domain | Layouts |
+|---|---|---|
+| Wave 1 | Ops & Incidents | MetaBlock · InfoPanel · ServiceDashboard · RunbookStep · ApiTryIt · MeetingNotes · RetroBoard · TeamGrid · OnCallRota · DecisionTable |
+| Wave 2 | Engineering Maturity | RFC · TechDebtRegister · SLODefinition · DORAMetrics |
+| Wave 3 | Data Governance | DataDictionary · DataContract · MLModelCard |
+| Wave 4 | Onboarding & Knowledge | OnboardingGuide · GlossaryPage · TechRadar |
+| Wave 5 | Compliance & Regulatory | ChangeRequest · IncidentPostMortem · SDLCGateChecklist · ITControlEvidence |
+
+---
+
+## Wave 1 — Ops & Incidents
+
+### MetaBlock
+**When to use:** Every single page. No exceptions.
+
+**Why:** Creates a consistent ownership signal at the top of every doc — who owns it, when it was last reviewed, what status it's in (live / draft / deprecated). Without it, docs rot silently because nobody knows if they're authoritative. Auditors and new joiners rely on it to assess whether a doc can be trusted.
+
+**Don't use when:** Never skip it. Even draft pages need an owner.
+
+**Key props:** `owner`, `team`, `status`, `lastUpdated`, `reviewedBy`, `tags`
+
+---
+
+### InfoPanel
+**When to use:** Whenever you need to surface a single critical message that readers must not miss — a prerequisite, a security warning, a tip that saves 30 minutes, or a policy that overrides the general instructions on the page.
+
+**Why:** Docusaurus admonitions (`:::warning`) work but render inconsistently inside MDX component trees. InfoPanel gives you full control over the icon, colour, and heading while staying inside the component system.
+
+**Don't use when:** You have more than 2 panels on the same page. At that point, rewrite the prose — panels lose impact when overused.
+
+**Key props:** `type` (info / tip / warning / danger), `title`
+
+---
+
+### ServiceDashboard
+**When to use:** The status page for a production service — what's up, what's degraded, what's down, right now.
+
+**Why:** Centralises service health in the knowledge hub rather than forcing readers to switch tools (PagerDuty, Grafana, status page) to understand current state. Ideal as an embed on a team homepage or a pinned runbook.
+
+**Don't use when:** The page is about a past incident (use IncidentPostMortem). The dashboard is always about current state.
+
+**Key props:** `services[]` with `status` (operational / degraded / outage / maintenance), `incidents[]`, on-call contact
+
+---
+
+### RunbookStep
+**When to use:** A step-by-step operational procedure that someone might execute at 3am under pressure — pipeline failure recovery, database failover, secret rotation, DR runbook.
+
+**Why:** Numbered, collapsible steps reduce cognitive load during incidents. The `verify` field on each step tells the responder exactly how to confirm the step succeeded before moving on — critical for preventing "fixed the wrong thing" spirals.
+
+**Don't use when:** The procedure is > 20 steps. At that point, split into sub-runbooks and link them. Don't use for one-off how-to guides (use InfoPanel + prose).
+
+**Key props:** `steps[]` with `title`, `command`, `verify`, `warningIfSkipped`
+
+---
+
+### ApiTryIt
+**When to use:** A runbook or how-to page where the reader should be able to fire a real API call directly from the doc — health check, status poll, triggering a pipeline in dev, testing an endpoint.
+
+**Why:** Eliminates context switching. Engineers on an incident can verify an endpoint is up without opening Postman, finding credentials, or switching terminals. The inline response display confirms the call worked.
+
+**Don't use when:** The endpoint requires a body with sensitive data the reader shouldn't paste into a browser. Don't use for production destructive operations.
+
+**Key props:** `url`, `method`, `headers[]`, `body`
+
+---
+
+### MeetingNotes
+**When to use:** Capturing the decisions, actions, and attendees of a recurring team ceremony — sprint planning, architecture review, steering committee, 1:1 cadence doc.
+
+**Why:** Meeting notes in Confluence degrade quickly. The structured format (attendees, agenda, decisions, action items with owners) makes the doc scannable in 30 seconds rather than requiring a full read.
+
+**Don't use when:** It's a one-off brainstorm or design session — use a plain doc. Meeting notes are for recurring ceremonies where there's a stable structure.
+
+**Key props:** `attendees[]`, `agenda[]`, `decisions[]`, `actionItems[]` with `owner` and `dueDate`
+
+---
+
+### RetroBoard
+**When to use:** Sprint retrospective — capturing what went well, what to improve, and actions for the next sprint.
+
+**Why:** A structured retro board makes it easy to spot recurring themes across multiple retros (keep the history as separate pages, same format). The action items have owners and are trackable.
+
+**Don't use when:** The team uses an external retro tool (Parabol, FunRetro) with its own export. In that case, just link to the export rather than duplicating.
+
+**Key props:** `sprint`, `dateRange`, columns for went-well / to-improve / actions
+
+---
+
+### TeamGrid + TeamCard
+**When to use:** A team directory or "who does what" reference page — roster of engineers, roles, Slack handles, areas of ownership.
+
+**Why:** New joiners spend the first week asking "who do I talk to about X?" A searchable TeamGrid answers that without a DM. The `onCall` flag and `skills[]` make it a lightweight capability map.
+
+**Don't use when:** You have more than 30 people — at that scale, integrate with your HR system or use Confluence People Directory instead of maintaining this manually.
+
+**Key props:** `name`, `role`, `team`, `skills[]`, `slack`, `onCall`
+
+---
+
+### OnCallRota
+**When to use:** Displaying who is currently on call and what the next few shifts look like — at the top of a service page, in the team directory, or in a runbook.
+
+**Why:** During an incident, "who do I call right now?" is the first question. Embedding the rota directly in the doc saves 2 minutes and 1 context switch every time.
+
+**Don't use when:** Your organisation uses PagerDuty or OpsGenie — embed their widget instead of duplicating the schedule.
+
+**Key props:** `rotaEntries[]` with `name`, `startDate`, `endDate`, `primary` flag
+
+---
+
+### DecisionTable
+**When to use:** Comparing two or more options across the same set of criteria — technology selection, vendor comparison, architecture option analysis.
+
+**Why:** Prose comparisons are hard to scan. A structured comparison table with a recommendation row forces the author to be explicit about criteria and prevents "we discussed it in a meeting" decisions that are unrecoverable.
+
+**Don't use when:** There's only one option. A decision table with one row is just a feature list — use prose.
+
+**Key props:** `options[]`, `criteria[]`, `recommendation`
+
+---
+
+## Wave 2 — Engineering Maturity
+
+### RFC (Request for Comments)
+**When to use:** Proposing a significant technical change that affects multiple systems or teams — before the work starts, while the design is still malleable. Examples: introducing a new message bus, changing the API versioning strategy, replacing a core library.
+
+**Why:** RFCs create a dated, searchable record of why a decision was made and what alternatives were considered. They prevent the same debate from being re-litigated 6 months later. The "open questions" section signals that the RFC is not yet decided and invites comment.
+
+**Don't use when:** The change is self-contained to one service and reversible. Use an ADR for decisions already made. Use a ticket for purely implementation-level work.
+
+**Key props:** `rfcId`, `status` (draft / open-for-comment / decided / withdrawn), `problemStatement`, `proposedSolution`, `alternatives[]`, `openQuestions[]`
+
+---
+
+### TechDebtRegister
+**When to use:** Maintaining a prioritised, team-visible backlog of known technical debt items — performance shortcuts, deprecated patterns, architectural compromises taken under deadline pressure.
+
+**Why:** Tech debt is only manageable when it's visible. A public register with severity ratings and owners prevents the "we all know it's bad but nobody's fixing it" problem. The filterability by severity lets teams triage during sprint planning.
+
+**Don't use when:** Your team tracks tech debt in Jira — keep one source of truth. Use this for narrative-rich items that need explanation, not tickets.
+
+**Key props:** `items[]` with `id`, `title`, `severity` (critical / high / medium / low), `description`, `effort`, `owner`, `status`
+
+---
+
+### SLODefinition
+**When to use:** Documenting the reliability targets for a service — what the SLI measures, what the SLO target is, what the error budget is, and what happens when the budget runs out.
+
+**Why:** SLOs without documentation become tribal knowledge. When a new on-call engineer takes their first shift, they need to know what "good" looks like and what to do when the error budget is at 20%. The visual error budget gauge makes the current state immediately legible.
+
+**Don't use when:** The service doesn't have instrumented SLIs yet. Don't document aspirational SLOs — document the ones you can actually measure.
+
+**Key props:** `sliName`, `target` (e.g. 99.5%), `currentValue`, `windowDays`, `errorBudgetRemainingPct`, `exhaustionPolicy`, `alertPolicy`
+
+---
+
+### DORAMetrics
+**When to use:** Quarterly or monthly snapshot of the team's software delivery performance across the four DORA metrics — Deployment Frequency, Lead Time for Changes, MTTR, and Change Failure Rate.
+
+**Why:** DORA metrics give a team a shared, evidence-based language for delivery performance. The Elite / High / Medium / Low rating makes the benchmark concrete. Trend arrows over time show whether the team is improving or regressing.
+
+**Don't use when:** You can't calculate the metrics accurately. Approximated DORA metrics create false confidence. Instrument your pipeline first, then document.
+
+**Key props:** `period`, `metrics[]` with `name`, `value`, `rating`, `trend`, `notes`
+
+---
+
+## Wave 3 — Data Governance
+
+### DataDictionary
+**When to use:** Documenting the fields in a shared data object, database schema, API response, or event payload — any data that crosses a team boundary or is used by multiple systems.
+
+**Why:** In regulated industries (banking), data lineage and field definitions are not optional — they are audit requirements (BCBS 239). Even outside compliance, a shared data dictionary eliminates "what does this field actually mean?" Slack threads.
+
+**Don't use when:** The data is internal to a single function or module. Document the public contract, not the implementation internals.
+
+**Key props:** `fields[]` with `name`, `type`, `description`, `pii`, `nullable`, `owner`
+
+---
+
+### DataContract
+**When to use:** Formalising the agreement between a data producer and one or more data consumers — event schema, API response shape, dataset schema, file format.
+
+**Why:** Data contracts make schema changes a deliberate, communicated act rather than a silent breaking change. The SLA row (freshness, availability, latency) gives consumers explicit commitments to hold the producer to. The breaking change policy eliminates "why didn't you tell me?" incidents.
+
+**Don't use when:** The data is consumed by only one internal system you also own. Contracts exist to protect a boundary between teams. Don't over-formalise internal implementation details.
+
+**Key props:** `producer`, `consumers[]`, `sla` (freshness / availability / latency), `schema[]`, `qualityRules[]`, `breakingChangePolicy`
+
+---
+
+### MLModelCard
+**When to use:** Documenting any model (LLM, classifier, scoring model) used in a production decision — what it does, how it performs, where it fails, what regulatory framework governs it.
+
+**Why:** In financial services, SR 11-7 (US) and PRA SS1/23 (UK) require model documentation, validation evidence, and ongoing monitoring for any model used in decision-making. Even outside regulation, model cards prevent "the model says so" as a justification without context. The bias checks table makes known failure modes explicit.
+
+**Don't use when:** The "model" is a deterministic rule engine with no learned parameters. Rule engines have their own documentation pattern (decision table / policy doc).
+
+**Key props:** `riskTier` (tier-1/2/3), `performanceMetrics[]` with pass/fail, `biasChecks[]`, `limitations[]`, `regulatoryFramework`
+
+---
+
+## Wave 4 — Onboarding & Knowledge
+
+### OnboardingGuide
+**When to use:** The structured day-1 through day-90 plan for a new team member — what to read, who to meet, what access to get, what tasks to complete in the first 30/60/90 days.
+
+**Why:** Onboarding without structure costs 2-4 weeks of productivity. The clickable task list (state saved in the browser tab) gives the new joiner agency and the hiring manager visibility. The access checklist with `critical` flags prevents "I can't work because I don't have access to X" on day 2.
+
+**Don't use when:** The team is large enough that onboarding is owned by HR and L&D. At that scale, this is a supplement to, not a replacement for, a formal programme.
+
+**Key props:** `phases[]` (pre-start/30/60/90), `accessList[]` with `critical` flag, `mustReadPages[]`
+
+---
+
+### GlossaryPage
+**When to use:** Defining the shared vocabulary for the team — acronyms, domain terms, internal system names, regulatory abbreviations.
+
+**Why:** In banking tech, a new engineer encounters 40–60 acronyms in their first week (DORA, BCBS 239, CET1, MiFID II, SR 11-7). A searchable, domain-filtered glossary with `seeAlso` links is the single source of truth for "what does this mean in our context."
+
+**Don't use when:** The term is standard industry terminology with no team-specific meaning. Don't duplicate Wikipedia. Only define terms whose meaning is context-specific or ambiguous in your team's usage.
+
+**Key props:** `terms[]` with `term`, `expansion`, `domain`, `definition`, `seeAlso[]`
+
+---
+
+### TechRadar
+**When to use:** Quarterly or half-yearly snapshot of the team's technology choices — what to adopt, what's in trial, what to assess, what to stop using.
+
+**Why:** The Thoughtworks radar format gives teams a shared signal on technology bets. "Adopt" tells engineers they should actively use this. "Hold" tells them not to start new work with it. The radar prevents fragmentation where different engineers make incompatible technology choices in different services.
+
+**Don't use when:** The team is too small to have technology diversity. A 3-person team doesn't need a radar. Start when you have 10+ engineers making independent technology choices.
+
+**Key props:** `entries[]` with `name`, `ring` (adopt/trial/assess/hold), `quadrant` (frameworks/tools/languages/platforms), `isNew`, `movedFrom`
+
+---
+
+## Wave 5 — Compliance & Regulatory
+
+### ChangeRequest
+**When to use:** Every production change that touches a regulated system, goes through a CAB process, or requires rollback planning — dependency upgrades, schema changes, infrastructure changes, new feature deployments in regulated services.
+
+**Why:** In banking, all Tier 1/2 changes require a documented change record with business justification, implementation steps, test evidence, rollback procedure, and approvals before the maintenance window opens. The CAB approvals tab makes the sign-off status immediately visible and creates an audit trail.
+
+**Don't use when:** The change is a hotfix with emergency CAB (use a simplified record). Don't use for purely development-environment changes that don't touch regulated systems.
+
+**Key props:** `type` (normal/standard/emergency), `risk`, `status`, `cabApprovals[]`, `implementationSteps[]`, `rollbackPlan`
+
+---
+
+### IncidentPostMortem
+**When to use:** After any P1 or P2 incident — and optionally for P3 incidents where a systemic learning opportunity exists. The PIR is written within 5 business days of resolution.
+
+**Why:** Blameless post-mortems are the primary mechanism for preventing repeat incidents. The structured format (root cause, contributing factors, timeline, action items) ensures the team extracts the full learning rather than just "we fixed it." The timeline tab enables precise reconstruction of the sequence of events, which is required for regulatory incident reporting.
+
+**Don't use when:** The incident was a false alarm or had zero customer impact. Don't bureaucratise minor events — that desensitises the team to the PIR process.
+
+**Key props:** `severity` (P1/P2/P3/P4), `timeline[]` with typed events, `actionItems[]` with `priority` and `status`, `whatWentWell[]`, `whatToImprove[]`
+
+---
+
+### SDLCGateChecklist
+**When to use:** Every release to production — or to staging for systems where staging approval is gated. Each gate (dev-complete → code-review → testing → staging → production) must be explicitly passed before promoting to the next environment.
+
+**Why:** Gate checklists prevent "we meant to do that" — the test you forgot, the security scan you skipped, the rollback you never verified. In regulated environments, the gate checklist is the primary evidence that the SDLC process was followed. The visual progress bar makes release readiness legible at a glance.
+
+**Don't use when:** The deployment is a hotfix that needs to bypass normal gates. In that case, document the waiver, get sign-off, and create a follow-up ticket to backfill the skipped gates.
+
+**Key props:** `gates[]` with `status`, `checks[]` with `status` (pass/fail/na/pending), `approver`
+
+---
+
+### ITControlEvidence
+**When to use:** Any IT General Control (ITGC) that requires documented, reviewer-signed evidence on a defined frequency — access reviews, change management controls, backup and recovery tests, segregation of duties checks, privileged access reviews.
+
+**Why:** SOX, PCI-DSS, and DORA (regulation) all require that ITGC evidence is retained, attributed to a reviewer, and available for audit. The evidence log with result (pass/fail/exception) and the exceptions register with mitigating controls satisfy both the external auditor's evidence requirements and the internal audit team's expectation for timely remediation tracking.
+
+**Don't use when:** The control is automated and evidence is generated by a GRC tool (e.g., ServiceNow, Vanta, Drata). In that case, link to the GRC tool record rather than duplicating evidence manually.
+
+**Key props:** `framework` (SOX ITGC/PCI-DSS/BCBS 239), `controlType` (preventive/detective/corrective), `frequency`, `evidence[]` with `result`, `exceptions[]` with `risk` and `status`
+
+---
+
+## Decision flowchart
+
+```
+Is this about the current state of a running service?
+  → YES → ServiceDashboard
+
+Is this a procedure someone will execute step-by-step?
+  → YES, operational/incident → RunbookStep
+  → YES, release promotion → SDLCGateChecklist
+
+Is this about something that already happened?
+  → Incident → IncidentPostMortem
+  → Decision already made → ADR
+  → Meeting → MeetingNotes
+  → Sprint reflection → RetroBoard
+
+Is this a proposal for something not yet decided?
+  → Technical change → RFC
+  → Production system change (CAB) → ChangeRequest
+
+Is this reference information people look up?
+  → Who is on the team / on call → TeamGrid / OnCallRota
+  → What do terms mean → GlossaryPage
+  → What technologies do we use → TechRadar
+  → What are field definitions in data → DataDictionary
+  → What is the contract between systems → DataContract
+
+Is this a compliance or audit artefact?
+  → Control evidence → ITControlEvidence
+  → Model documentation → MLModelCard
+
+Is this about tracking quality or performance?
+  → Reliability targets → SLODefinition
+  → Delivery performance → DORAMetrics
+  → Known technical debt → TechDebtRegister
+
+Is this for a new team member?
+  → OnboardingGuide
+```
