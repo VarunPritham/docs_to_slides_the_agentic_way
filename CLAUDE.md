@@ -202,3 +202,17 @@ All layout CSS must use CSS custom properties, never hardcoded light hex values 
 | `/add-layout` | Create a new ops/incident/team layout in index.tsx |
 | `/add-layout-compliance` | Create a new compliance layout in wave5.tsx |
 | `/add-layout-docs` | Create a new docs-as-code layout in wave6.tsx |
+
+### Attachment Agents (one per file type)
+
+| File | Covers |
+|---|---|
+| `.claude/agents/attachment-image.md` | `.png .jpg .jpeg .gif .svg .webp .bmp .tiff .ico` — thumbnail grid + lightbox |
+| `.claude/agents/attachment-video.md` | `.mp4 .webm .mov .avi .mkv` + YouTube/Vimeo URLs — native player + iframe embed |
+| `.claude/agents/attachment-pdf.md` | `.pdf` — download card, no preview |
+| `.claude/agents/attachment-spreadsheet.md` | `.xlsx .xls .csv .ods .tsv` — download card, CSV preview optional |
+| `.claude/agents/attachment-document.md` | `.docx .doc .pptx .ppt .odt .odp .rtf` — download card |
+| `.claude/agents/attachment-archive.md` | `.zip .tar.gz .tar .gz .7z .rar .tgz` — download card, compound ext detection |
+| `.claude/agents/attachment-config.md` | `.yaml .yml .json .toml .env .ini .conf .tf` + dotfiles — Preview + Download |
+| `.claude/agents/attachment-code.md` | `.py .ts .sh .sql .go .rs .java` and 15+ more — Preview + Download |
+| `.claude/agents/attachment-text.md` | `.txt .log .md .diff .patch .rst` — Preview + Download |

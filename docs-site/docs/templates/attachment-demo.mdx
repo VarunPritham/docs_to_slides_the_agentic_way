@@ -1,0 +1,284 @@
+---
+id: attachment-demo
+title: Attachments Demo
+---
+
+import { MetaBlock, RunbookStep, InfoPanel } from '@site/src/components/PageLayouts';
+import { AttachmentPanel } from '@site/src/components/PageLayouts/wave6';
+
+export const envPreview = `# Pipeline Server — Production
+ANTHROPIC_API_KEY=sk-ant-api03-[REDACTED]
+LLM_PROVIDER=anthropic
+LOG_LEVEL=info
+PORT=8000
+SLIDEV_PORT=3030
+MAX_CONCURRENT_JOBS=4
+JOB_TIMEOUT_SECONDS=120`;
+
+export const docusaurusConfigPreview = `import type { Config } from '@docusaurus/types';
+
+const config: Config = {
+  title: 'DocSlide AI',
+  url: 'https://docs.internal.barclays.com',
+  themes: ['@docusaurus/theme-mermaid'],
+  markdown: { mermaid: true },
+  themeConfig: {
+    mermaid: {
+      theme: { light: 'neutral', dark: 'dark' },
+    },
+  },
+};
+
+export default config;`;
+
+export const yamlPreview = `pipeline:
+  name: docusaurus-to-slidev
+  version: 1.4.0
+  timeout_seconds: 120
+
+phases:
+  extraction:
+    agents: [mdx_file_reader, mdx_cleaner, text_extractor]
+  content:
+    agents: [content_chunker, content_type_classifier, prose_condenser]
+  design:
+    agents: [layout_selector, code_slide_agent, transition_agent]
+  assembly:
+    agents: [frontmatter_generator, slide_assembler, validator_agent]
+
+llm:
+  provider: anthropic
+  model: claude-3-5-sonnet-20241022
+  temperature: 0.3`;
+
+export const pythonPreview = `from typing import TypedDict
+
+class PipelineState(TypedDict):
+    source_path: str
+    output_dir: str
+    raw_content: str
+    cleaned_content: str
+    base_directory: str
+    headings: list
+    code_blocks: list
+    attachments: list
+    chunks: list
+    slides: list
+    pacing_report: dict
+    frontmatter: str
+    summary_slide: str
+    output_path: str
+    validation_errors: list`;
+
+export const bashPreview = `#!/bin/bash
+set -euo pipefail
+PREV_TAG="\${1:-v1.3.2}"
+echo "Rolling back to $PREV_TAG..."
+pkill -f "python server.py" || true
+sleep 2
+git fetch --tags
+git checkout "tags/$PREV_TAG" -- server.py agents/ tools/
+pip install -r requirements.txt --quiet
+nohup python server.py > /var/log/pipeline-server.log 2>&1 &
+echo "Rollback complete. PID: $!"`;
+
+export const logPreview = `2026-05-28 09:00:01 INFO  server.py:42   Pipeline server started. PID=18821
+2026-05-28 09:12:33 INFO  graph.py:88    Job started: docs/architecture.mdx
+2026-05-28 09:13:05 INFO  graph.py:88    Job started: docs/api-reference.mdx
+2026-05-28 09:14:11 WARN  assembly.py:61 Memory pressure detected: 1.8GB / 2.0GB
+2026-05-28 09:14:18 ERROR server.py:99   OOMKilled — process exceeded memory limit
+2026-05-28 09:14:18 ERROR server.py:100  Active jobs lost: 3
+Traceback (most recent call last):
+  File "server.py", line 99, in run_pipeline
+    result = pipeline.invoke(state)
+MemoryError: Unable to allocate 512 MiB`;
+
+export const mdPreview = `# Release Notes — v1.4.0 (2026-06-07)
+
+## Breaking Changes
+- LangGraph 0.2.x: StateGraph API changed
+- Pydantic v2: .dict() removed, use .model_dump()
+
+## New Features
+- AttachmentPanel component across all layouts
+- Dark mode Mermaid diagrams
+- EnvironmentReference secret masking
+
+## Bug Fixes
+- InfoPanel and RunbookStep respect dark mode
+- Architecture Diagram no white box in dark mode`;
+
+<MetaBlock owner="Varun Pritham" team="Platform" status="live" lastUpdated="2026-06-03" tags={['attachments','demo']} />
+
+# Attachment Panel — All File Types
+
+<InfoPanel type="info" title="What this page tests">
+  Every supported attachment kind — images, video (YouTube + native), PDF, Word, PowerPoint, spreadsheet, ZIP/tar, config files, code, and plain text. File type is auto-detected from the extension.
+</InfoPanel>
+
+---
+
+## Images — thumbnail grid + lightbox
+
+<AttachmentPanel title="Architecture Screenshots" files={[
+  {
+    name: "pipeline-overview.png",
+    url: "https://placehold.co/600x400/003087/00AEEF?text=Pipeline+Overview",
+    size: "42 KB",
+    description: "High-level pipeline flowchart"
+  },
+  {
+    name: "agent-router.png",
+    url: "https://placehold.co/600x400/004aad/ffffff?text=Agent+Router+Pattern",
+    size: "38 KB",
+    description: "Agent Router pattern diagram"
+  },
+  {
+    name: "dark-mode-preview.png",
+    url: "https://placehold.co/600x400/0f172a/e2e8f0?text=Dark+Mode+Preview",
+    size: "8 KB",
+    description: "Dark mode brand palette"
+  },
+]} />
+
+---
+
+## Video — YouTube embed
+
+<AttachmentPanel title="Demo Recordings" files={[
+  {
+    name: "Pipeline Walkthrough",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    description: "End-to-end demo: Generate Slides → Slidev presentation"
+  },
+]} />
+
+---
+
+## Documents — PDF, Word, PowerPoint
+
+<AttachmentPanel title="Project Documents" files={[
+  {
+    name: "architecture-spec.pdf",
+    url: "/files/architecture-spec.pdf",
+    size: "1.2 MB",
+    description: "Full architecture specification for the pipeline"
+  },
+  {
+    name: "impact-assessment.docx",
+    url: "/files/impact-assessment.docx",
+    size: "340 KB",
+    description: "CAB impact assessment for LangGraph 0.2.x upgrade"
+  },
+  {
+    name: "release-deck.pptx",
+    url: "/files/release-deck.pptx",
+    size: "2.8 MB",
+    description: "v1.4.0 release presentation for stakeholders"
+  },
+]} />
+
+---
+
+## Spreadsheets & Archives
+
+<AttachmentPanel title="Data & Packages" files={[
+  {
+    name: "test-results.xlsx",
+    url: "/files/test-results.xlsx",
+    size: "88 KB",
+    description: "Full regression test results for pipeline-server v1.4.0"
+  },
+  {
+    name: "access-review.csv",
+    url: "/files/access-review.csv",
+    size: "12 KB",
+    description: "ITGC-001 quarterly user access review export"
+  },
+  {
+    name: "pipeline-server-1.4.0.zip",
+    url: "/files/pipeline-server-1.4.0.zip",
+    size: "4.1 MB",
+    description: "Deployment package — pipeline-server v1.4.0"
+  },
+  {
+    name: "logs-2026-05-28.tar.gz",
+    url: "/files/logs-2026-05-28.tar.gz",
+    size: "18 MB",
+    description: "Pipeline server logs from incident INC-2026-0031"
+  },
+]} />
+
+---
+
+## Config files — with inline preview
+
+<AttachmentPanel title="Configuration Files" files={[
+  {
+    name: ".env.production",
+    url: "/files/.env.production",
+    size: "640 B",
+    description: "Production environment variables (secrets redacted)",
+    preview: envPreview,
+  },
+  {
+    name: "docusaurus.config.ts",
+    url: "/files/docusaurus.config.ts",
+    size: "3.2 KB",
+    description: "Docusaurus site config with Mermaid and theme settings",
+    language: "typescript",
+    preview: docusaurusConfigPreview,
+  },
+  {
+    name: "langgraph-config.yaml",
+    url: "/files/langgraph-config.yaml",
+    size: "1.1 KB",
+    description: "LangGraph pipeline execution config",
+    language: "yaml",
+    preview: yamlPreview,
+  },
+]} />
+
+---
+
+## Code files — with inline preview
+
+<AttachmentPanel title="Source Files" files={[
+  {
+    name: "state.py",
+    url: "/files/state.py",
+    size: "1.8 KB",
+    description: "PipelineState TypedDict — the shared Blackboard",
+    language: "python",
+    preview: pythonPreview,
+  },
+  {
+    name: "rollback.sh",
+    url: "/files/rollback.sh",
+    size: "920 B",
+    description: "Emergency rollback script — reverts pipeline-server to previous tag",
+    language: "bash",
+    preview: bashPreview,
+  },
+]} />
+
+---
+
+## Text & Log files — with inline preview
+
+<AttachmentPanel title="Logs & Notes" files={[
+  {
+    name: "incident-2026-05-28.log",
+    url: "/files/incident-2026-05-28.log",
+    size: "44 KB",
+    description: "Pipeline server logs from the OOM crash window (09:00–10:47 BST)",
+    preview: logPreview,
+  },
+  {
+    name: "release-notes-v1.4.0.md",
+    url: "/files/release-notes-v1.4.0.md",
+    size: "2.1 KB",
+    description: "Full release notes for pipeline-server v1.4.0",
+    preview: mdPreview,
+  },
+]} />

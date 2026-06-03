@@ -41,16 +41,21 @@ export interface Attachment {
 // ── detectKind helper ───────────────────────────────────────────────────────
 
 const detectKind = (name: string, url: string): AttachmentKind => {
-  const ext = (name.split('.').pop() ?? '').toLowerCase();
-  if (['png','jpg','jpeg','gif','svg','webp'].includes(ext)) return 'image';
-  if (['mp4','webm','mov'].includes(ext) || /youtube\.com|youtu\.be|vimeo\.com/.test(url)) return 'video';
+  // Dotfiles: .env, .env.local, .env.production → config
+  const basename = name.split('/').pop() ?? name;
+  if (/^\.env(\.|$)/.test(basename)) return 'config';
+  // .tar.gz / .tar.bz2 before single-ext check
+  if (/\.(tar\.gz|tar\.bz2|tar\.xz)$/.test(name)) return 'archive';
+  const ext = (basename.split('.').pop() ?? '').toLowerCase();
+  if (['png','jpg','jpeg','gif','svg','webp','bmp','tiff','ico'].includes(ext)) return 'image';
+  if (['mp4','webm','mov','avi','mkv','m4v'].includes(ext) || /youtube\.com|youtu\.be|vimeo\.com/.test(url)) return 'video';
   if (ext === 'pdf') return 'pdf';
-  if (['xlsx','xls','csv'].includes(ext)) return 'spreadsheet';
-  if (['docx','doc','pptx','ppt'].includes(ext)) return 'document';
-  if (['zip','tar','gz','7z'].includes(ext) || name.endsWith('.tar.gz')) return 'archive';
-  if (['yaml','yml','json','toml','env','ini','conf'].includes(ext)) return 'config';
-  if (['py','ts','tsx','js','jsx','sh','bash','sql','go','rs','java'].includes(ext)) return 'code';
-  if (['txt','log','md'].includes(ext)) return 'text';
+  if (['xlsx','xls','csv','ods','tsv'].includes(ext)) return 'spreadsheet';
+  if (['docx','doc','pptx','ppt','odt','odp','rtf'].includes(ext)) return 'document';
+  if (['zip','tar','gz','bz2','xz','7z','rar','tgz'].includes(ext)) return 'archive';
+  if (['yaml','yml','json','jsonc','toml','env','ini','conf','cfg','properties','xml','hcl','tf'].includes(ext)) return 'config';
+  if (['py','ts','tsx','js','jsx','mjs','cjs','sh','bash','zsh','sql','go','rs','java','rb','php','cs','cpp','c','h','kt','swift','r','scala'].includes(ext)) return 'code';
+  if (['txt','log','md','mdx','rst','nfo','diff','patch'].includes(ext)) return 'text';
   return 'unknown';
 };
 

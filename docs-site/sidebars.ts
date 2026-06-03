@@ -96,6 +96,7 @@ const sidebars: SidebarsConfig = {
         'templates/env-reference-pipeline',
         'templates/architecture-diagram-pipeline',
         'templates/code-snippets-platform',
+        'templates/attachment-demo',
       ],
     },
     {
